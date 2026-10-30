@@ -72,7 +72,21 @@ footer{padding:18px 0 30px;color:#888;font-size:12px;border-top:1px solid var(--
 .lg{font-size:12px;margin:2px 0;color:#444}
 .lg .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
 .chart.chart-fb{height:auto!important}
-@media print{nav.tabs,.fbar{display:none}html.js section.panel{display:block}}
+/* ===== 词汇云图（零依赖） ===== */
+.wordcloud{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;padding:6px 2px;line-height:1.25}
+.wordcloud .wc{cursor:default;transition:opacity .15s}
+.wordcloud .wc:hover{opacity:.65}
+.rankchip{display:inline-block;background:var(--gold);color:#fff;border-radius:6px;padding:1px 8px;font-size:12px;margin-right:6px}
+/* ===== 实时数据刷新提示 ===== */
+.livebar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:8px 0 0}
+.livebar button{border:1px solid var(--line);background:#fff;color:var(--navy);padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600}
+.livebar button:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.livebar .stamp{font-size:12px;color:#666}
+.livebar .autoctl{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:#333;cursor:pointer}
+.livebar select{border:1px solid var(--line);background:#fff;color:#333;padding:5px 8px;border-radius:8px;font-size:12.5px;cursor:pointer}
+.livebar .stamp#autoState{color:var(--navy);font-weight:600}
+.livebar .stamp#autoState.off{color:#888;font-weight:400}
+@media print{nav.tabs,.fbar,.livebar{display:none}html.js section.panel{display:block}}
 </style>
 </head>
 <body>
@@ -91,11 +105,24 @@ footer{padding:18px 0 30px;color:#888;font-size:12px;border-top:1px solid var(--
 <nav class="tabs" id="tabs">
  <button data-tab="board" class="active">热销榜单看板</button>
  <button data-tab="elems">要素分析</button>
+ <button data-tab="supply">阿里巴巴选品</button>
  <button data-tab="pains">痛点聚类</button>
  <button data-tab="culture">文化适配矩阵</button>
  <button data-tab="plans">差异化方案</button>
  <button data-tab="flow">工作流监控</button>
 </nav>
+<div class="livebar">
+ <button id="liveRefresh">↻ 立即刷新</button>
+ <label class="autoctl"><input type="checkbox" id="autoOn"> 定时自动刷新</label>
+ <select id="autoInterval">
+  <option value="60">每 1 分钟</option>
+  <option value="300" selected>每 5 分钟</option>
+  <option value="600">每 10 分钟</option>
+  <option value="1800">每 30 分钟</option>
+ </select>
+ <span class="stamp" id="autoState"></span>
+ <span class="stamp" id="liveStamp">数据快照 · 2026-10-29 ｜ 从同目录 data.json 拉取最新（GitHub Pages 更新只需覆盖 data.json）</span>
+</div>
 <section class="panel active" id="panel-board">
  <div class="kpi"><div class="b"><div class="v">70</div><div class="k">记录总数</div></div><div class="b"><div class="v">6</div><div class="k">品类覆盖</div></div><div class="b"><div class="v">3</div><div class="k">平台/数据源</div></div><div class="b"><div class="v">¥16.0</div><div class="k">中位价</div></div><div class="b"><div class="v">50/70</div><div class="k">有价记录</div></div></div>
  <div class="card" style="margin-top:14px">
@@ -109,7 +136,7 @@ footer{padding:18px 0 30px;color:#888;font-size:12px;border-top:1px solid var(--
   <div style="overflow-x:auto">
   <table class="tb" id="recTable">
    <thead><tr>
-    <th data-k="i">#</th><th data-k="n">商品名称</th><th data-k="c">品类</th><th data-k="p">价格¥</th>
+     <th data-k="i">序号</th><th data-k="n">商品名称</th><th data-k="c">品类</th><th data-k="p">价格¥</th>
     <th data-k="s">销量/付款*</th><th data-k="rv">评论数</th><th data-k="pl">平台</th><th data-k="mat">材质</th>
     <th data-k="en">设计要素</th><th data-k="neg">差评词</th><th data-k="pos">好评词</th><th>来源·日期</th>
    </tr></thead>
@@ -120,6 +147,10 @@ footer{padding:18px 0 30px;color:#888;font-size:12px;border-top:1px solid var(--
  </div>
 </section>
 <section class="panel" id="panel-elems">
+ <div class="card">
+  <h2 class="pt">设计要素词云（字号=出现款数 · 悬停看精确值）</h2>
+  <div id="wcElems"><div class="wordcloud"><span class="wc" style="font-size:42.0px;color:#1F3864;font-weight:700" title="汉服配饰·款 · 频次 37">汉服配饰</span><span class="wc" style="font-size:41.0px;color:#1F3864;font-weight:700" title="古风·款 · 频次 35">古风</span><span class="wc" style="font-size:38.5px;color:#1F3864;font-weight:700" title="流苏·款 · 频次 30">流苏</span><span class="wc" style="font-size:35.7px;color:#1F3864;font-weight:700" title="发簪·款 · 频次 25">发簪</span><span class="wc" style="font-size:35.7px;color:#1F3864;font-weight:700" title="新中式·款 · 频次 25">新中式</span><span class="wc" style="font-size:33.4px;color:#1F3864;font-weight:700" title="步摇·款 · 频次 21">步摇</span><span class="wc" style="font-size:33.4px;color:#1F3864;font-weight:700" title="礼品属性·款 · 频次 21">礼品属性</span><span class="wc" style="font-size:32.1px;color:#1F3864;font-weight:700" title="原创设计·款 · 频次 19">原创设计</span><span class="wc" style="font-size:32.1px;color:#1F3864;font-weight:700" title="国风·款 · 频次 19">国风</span><span class="wc" style="font-size:31.5px;color:#C9A227;font-weight:600" title="旗袍配饰·款 · 频次 18">旗袍配饰</span><span class="wc" style="font-size:30.1px;color:#C9A227;font-weight:600" title="发钗·款 · 频次 16">发钗</span><span class="wc" style="font-size:29.5px;color:#C9A227;font-weight:600" title="项链·款 · 频次 15">项链</span><span class="wc" style="font-size:28.7px;color:#C9A227;font-weight:600" title="复古·款 · 频次 14">复古</span><span class="wc" style="font-size:28.0px;color:#C9A227;font-weight:600" title="花朵·款 · 频次 13">花朵</span><span class="wc" style="font-size:26.5px;color:#C9A227;font-weight:600" title="高级感·款 · 频次 11">高级感</span><span class="wc" style="font-size:26.5px;color:#C9A227;font-weight:600" title="套装·款 · 频次 11">套装</span><span class="wc" style="font-size:25.7px;color:#C9A227;font-weight:600" title="百搭·款 · 频次 10">百搭</span><span class="wc" style="font-size:25.7px;color:#C9A227;font-weight:600" title="小众·款 · 频次 10">小众</span><span class="wc" style="font-size:25.7px;color:#C9A227;font-weight:600" title="耳环·款 · 频次 10">耳环</span><span class="wc" style="font-size:24.8px;color:#C9A227;font-weight:600" title="古典·款 · 频次 9">古典</span><span class="wc" style="font-size:24.8px;color:#C9A227;font-weight:600" title="简约·款 · 频次 9">简约</span><span class="wc" style="font-size:24.8px;color:#C9A227;font-weight:600" title="珍珠·款 · 频次 9">珍珠</span><span class="wc" style="font-size:24.8px;color:#C9A227;font-weight:600" title="耳钉·款 · 频次 9">耳钉</span><span class="wc" style="font-size:24.0px;color:#C9A227;font-weight:600" title="品牌款·款 · 频次 8">品牌款</span><span class="wc" style="font-size:24.0px;color:#C9A227;font-weight:600" title="手工·款 · 频次 8">手工</span><span class="wc" style="font-size:24.0px;color:#C9A227;font-weight:600" title="吊坠·款 · 频次 8">吊坠</span><span class="wc" style="font-size:24.0px;color:#C9A227;font-weight:600" title="璎珞·款 · 频次 8">璎珞</span><span class="wc" style="font-size:23.0px;color:#C9A227;font-weight:600" title="长款·款 · 频次 7">长款</span><span class="wc" style="font-size:23.0px;color:#C9A227;font-weight:600" title="婚嫁场景·款 · 频次 7">婚嫁场景</span><span class="wc" style="font-size:23.0px;color:#C9A227;font-weight:600" title="明制·款 · 频次 7">明制</span></div></div>
+ </div>
  <div class="card">
   <h2 class="pt">设计要素频次 Top25（归一化后）</h2>
   <div id="chElems" class="chart" style="height:420px"></div>
@@ -140,7 +171,24 @@ footer{padding:18px 0 30px;color:#888;font-size:12px;border-top:1px solid var(--
   <div style="overflow-x:auto"><table class="tb"><thead><tr><th>要素</th><th>全局频次</th><th>全局渗透</th><th>均价¥</th><th>主要分布(款)</th></tr></thead><tbody><tr><td><b>汉服配饰</b></td><td>37</td><td>52.9%</td><td>¥21</td><td>发饰×21、颈饰×9、佩饰×4、耳饰×3</td></tr><tr><td><b>古风</b></td><td>35</td><td>50.0%</td><td>¥20</td><td>发饰×21、颈饰×8、耳饰×2、手饰×2、佩饰×2</td></tr><tr><td><b>流苏</b></td><td>30</td><td>42.9%</td><td>¥12</td><td>发饰×17、颈饰×6、佩饰×4、耳饰×2、礼盒套装×1</td></tr><tr><td><b>发簪</b></td><td>25</td><td>35.7%</td><td>¥17</td><td>发饰×25</td></tr><tr><td><b>新中式</b></td><td>25</td><td>35.7%</td><td>¥35</td><td>发饰×10、颈饰×5、手饰×5、耳饰×4、佩饰×1</td></tr><tr><td><b>步摇</b></td><td>21</td><td>30.0%</td><td>¥16</td><td>发饰×21</td></tr><tr><td><b>礼品属性</b></td><td>21</td><td>30.0%</td><td>¥79</td><td>发饰×9、礼盒套装×6、手饰×3、耳饰×2、佩饰×1</td></tr><tr><td><b>原创设计</b></td><td>19</td><td>27.1%</td><td>¥46</td><td>发饰×7、颈饰×3、耳饰×3、手饰×3、佩饰×3</td></tr><tr><td><b>国风</b></td><td>19</td><td>27.1%</td><td>¥15</td><td>发饰×7、颈饰×4、耳饰×4、手饰×2、佩饰×2</td></tr><tr><td><b>旗袍配饰</b></td><td>18</td><td>25.7%</td><td>¥18</td><td>发饰×9、颈饰×4、耳饰×3、佩饰×2</td></tr><tr><td><b>发钗</b></td><td>16</td><td>22.9%</td><td>¥18</td><td>发饰×16</td></tr><tr><td><b>项链</b></td><td>15</td><td>21.4%</td><td>¥38</td><td>颈饰×12、礼盒套装×3</td></tr><tr><td><b>复古</b></td><td>14</td><td>20.0%</td><td>¥20</td><td>发饰×6、颈饰×4、耳饰×3、礼盒套装×1</td></tr><tr><td><b>花朵</b></td><td>13</td><td>18.6%</td><td>¥40</td><td>发饰×5、颈饰×2、耳饰×2、手饰×2、礼盒套装×1、佩饰×1</td></tr><tr><td><b>高级感</b></td><td>11</td><td>15.7%</td><td>¥14</td><td>发饰×6、礼盒套装×2、颈饰×1、耳饰×1、手饰×1</td></tr><tr><td><b>套装</b></td><td>11</td><td>15.7%</td><td>¥16</td><td>发饰×5、礼盒套装×5、耳饰×1</td></tr><tr><td><b>百搭</b></td><td>10</td><td>14.3%</td><td>¥18</td><td>发饰×3、颈饰×3、佩饰×2、耳饰×1、手饰×1</td></tr><tr><td><b>小众</b></td><td>10</td><td>14.3%</td><td>¥101</td><td>耳饰×4、发饰×2、礼盒套装×2、手饰×2</td></tr><tr><td><b>耳环</b></td><td>10</td><td>14.3%</td><td>¥44</td><td>耳饰×8、礼盒套装×2</td></tr><tr><td><b>古典</b></td><td>9</td><td>12.9%</td><td>¥29</td><td>发饰×8、手饰×1</td></tr><tr><td><b>简约</b></td><td>9</td><td>12.9%</td><td>¥18</td><td>发饰×7、耳饰×1、礼盒套装×1</td></tr><tr><td><b>珍珠</b></td><td>9</td><td>12.9%</td><td>¥17</td><td>发饰×8、耳饰×1</td></tr><tr><td><b>耳钉</b></td><td>9</td><td>12.9%</td><td>¥20</td><td>礼盒套装×5、耳饰×4</td></tr><tr><td><b>品牌款</b></td><td>8</td><td>11.4%</td><td>¥133</td><td>发饰×6、耳饰×1、手饰×1</td></tr><tr><td><b>手工</b></td><td>8</td><td>11.4%</td><td>¥13</td><td>发饰×3、耳饰×3、手饰×1、佩饰×1</td></tr></tbody></table></div>
  </div>
 </section>
-<section class="panel" id="panel-pains">
+ <section class="panel" id="panel-supply">
+  <div class="card">
+   <h2 class="pt">阿里巴巴(1688) 供货端选品快照</h2>
+   <div class="card"><span class="chip a">阿里巴巴(1688) 供货端 · AI检索快照</span><p style="font-size:12.5px;color:#444;margin:8px 0 4px">采集：2026-10-29 ｜ 状态：ai_collected_reference ｜ 覆盖品类：6</p><p class="muted">以下为1688搜索/商品页的列表单价，非逐条成交供货价。正式选品需登录1688按SKU逐条询价并核验起订量/账期/打样（待成员A回填）。价格单位为人民币元。</p><p style="font-size:12px;margin:6px 0 2px"><b>阶梯起订示例：</b>新中式链条流苏发簪（合金）：1 个起批→¥11.66 / 30–99 个→¥10.78 / ≥100 个→¥9.79 ｜ 物流：浙江金华，快递 ¥3.00</p><p class="muted">文件内「一件代发」服务标出现 138 次，说明国风饰品供货以一件代发/低起订为主，适合小成本测款。</p><p style="font-size:12px;margin-top:8px">出处复核：<a href="https://www.1688.com/chanpin/-D6D0CABDCACEC6B7.html" target="_blank" rel="noopener">1688·1</a><a href="https://www.1688.com/jiage/-B9C5B4FACAD7CACECDBCC6AC.html" target="_blank" rel="noopener">1688·2</a><a href="https://www.1688.com/jiage/-C6ECC5DBCACEC6B7.html" target="_blank" rel="noopener">1688·3</a><a href="https://www.1688.com/market/-393235D2F8B7A2F4A2.html" target="_blank" rel="noopener">1688·4</a><a href="https://www.1688.com/jiage/-D6D0B9FAB9C5B7E7CACEC6B7.html" target="_blank" rel="noopener">1688·5</a><a href="https://m.1688.com/offer/730795259717.html" target="_blank" rel="noopener">1688·6</a></p></div>
+  </div>
+  <div class="grid2">
+   <div class="card">
+    <h2 class="pt">1688 供货材质词云（字号=命中款数）</h2>
+    <div id="wcMat"><div class="wordcloud"><span class="wc" style="font-size:42.0px;color:#1F3864;font-weight:700" title="S925银·次 · 频次 33">S925银</span><span class="wc" style="font-size:35.5px;color:#1F3864;font-weight:700" title="檀木·次 · 频次 22">檀木</span><span class="wc" style="font-size:33.5px;color:#1F3864;font-weight:700" title="珐琅·次 · 频次 19">珐琅</span><span class="wc" style="font-size:32.9px;color:#1F3864;font-weight:700" title="珍珠·次 · 频次 18">珍珠</span><span class="wc" style="font-size:28.4px;color:#C9A227;font-weight:600" title="醋酸·次 · 频次 12">醋酸</span><span class="wc" style="font-size:26.7px;color:#C9A227;font-weight:600" title="合金·次 · 频次 10">合金</span><span class="wc" style="font-size:26.7px;color:#C9A227;font-weight:600" title="花丝·次 · 频次 10">花丝</span><span class="wc" style="font-size:23.8px;color:#C9A227;font-weight:600" title="水晶·次 · 频次 7">水晶</span><span class="wc" style="font-size:22.8px;color:#C9A227;font-weight:600" title="烧蓝·次 · 频次 6">烧蓝</span><span class="wc" style="font-size:22.8px;color:#C9A227;font-weight:600" title="木质·次 · 频次 6">木质</span><span class="wc" style="font-size:21.7px;color:#5b6b86;font-weight:400" title="玉髓·次 · 频次 5">玉髓</span><span class="wc" style="font-size:21.7px;color:#5b6b86;font-weight:400" title="和田玉·次 · 频次 5">和田玉</span><span class="wc" style="font-size:20.5px;color:#5b6b86;font-weight:400" title="琉璃·次 · 频次 4">琉璃</span><span class="wc" style="font-size:19.1px;color:#5b6b86;font-weight:400" title="玛瑙·次 · 频次 3">玛瑙</span><span class="wc" style="font-size:19.1px;color:#5b6b86;font-weight:400" title="翡翠·次 · 频次 3">翡翠</span><span class="wc" style="font-size:19.1px;color:#5b6b86;font-weight:400" title="电镀·次 · 频次 3">电镀</span></div></div>
+   </div>
+   <div class="card">
+    <h2 class="pt">供货价带 × 平台零售价 对照（零售中位价来自本页榜单）</h2>
+    <div style="overflow-x:auto"><table class="tb"><thead><tr><th>品类</th><th>1688供货价带</th><th>零售中位</th><th>可承受加价</th><th>高端带提示</th></tr></thead><tbody><tr><td><b>发饰（发簪/步摇/头饰）</b></td><td>¥0.5–6</td><td>¥11.8</td><td class="heatcell" style="background:#E6F4EA">×2.0–23.6</td><td class="muted">S925银 / 花丝 / 珐琅工艺款约 8.4–755，属高端带</td></tr><tr><td><b>颈饰（项链/吊坠/锁骨链/毛衣链/璎珞）</b></td><td>¥5–52</td><td>¥18.81</td><td class="heatcell" style="background:#E6F4EA">×0.4–3.8</td><td class="muted">岫玉璎珞长项链约 118，属高端带</td></tr><tr><td><b>耳饰（耳环/耳钉/耳坠）</b></td><td>¥2–33</td><td>¥18.82</td><td class="heatcell" style="background:#E6F4EA">×0.6–9.4</td><td class="muted">琉璃做旧款约到 33</td></tr><tr><td><b>手饰（手链/手串/手镯）</b></td><td>¥0.6–26</td><td>¥49</td><td class="heatcell" style="background:#E6F4EA">×1.9–81.7</td><td class="muted">沉香/南红/蜜蜡大漆款约到 26.4</td></tr><tr><td><b>佩饰（背云/压襟/胸坠）</b></td><td>¥3–30</td><td>¥14.76</td><td class="heatcell" style="background:#E6F4EA">×0.5–4.9</td><td class="muted">汉服背云/压襟多用滴油+仿玉</td></tr><tr><td><b>礼盒套装</b></td><td>¥6–60</td><td>–</td><td class="heatcell" style="background:#E6F4EA">—</td><td class="muted">套装起订量更高，供货价随件数浮动</td></tr></tbody></table></div>
+    <p class="muted">「可承受加价」= 零售中位 ÷ 供货高/低价，为毛利方向的粗略上限估计（未含运费/退货/税），最终以逐SKU人工询价为准。</p>
+   </div>
+  </div>
+ </section>
+ <section class="panel" id="panel-pains">
  <div class="card">
   <h2 class="pt">痛点证据（17 条有出处品类级差评 · 含高/中/低严重度 · 点击展开评价原文）</h2>
   <div id="chPains" class="chart" style="height:380px"></div>
@@ -153,8 +201,9 @@ footer{padding:18px 0 30px;color:#888;font-size:12px;border-top:1px solid var(--
    <div id="chNeg" class="chart"></div>
   </div>
   <div class="card">
-   <h2 class="pt">好评卖点词 Top12（供成员C写文案）</h2>
-   <div><span class="chip g">做工精细 ×10款</span><span class="chip g">性价比高 ×8款</span><span class="chip g">光泽质感好 ×7款</span><span class="chip g">包装精致 ×6款</span><span class="chip g">大气高级 ×6款</span><span class="chip g">送礼场景 ×5款</span><span class="chip g">佩戴舒适 ×5款</span><span class="chip g">物流快 ×5款</span><span class="chip g">质感好 ×4款</span><span class="chip g">佩戴稳固 ×3款</span><span class="chip g">不缠发不勾丝 ×3款</span><span class="chip g">与图片一致 ×3款</span></div>
+   <h2 class="pt">好评卖点词云（字号=覆盖款数）</h2>
+   <div id="wcPos"><div class="wordcloud"><span class="wc" style="font-size:42.0px;color:#1F3864;font-weight:700" title="做工精细·款 · 频次 10">做工精细</span><span class="wc" style="font-size:38.2px;color:#1F3864;font-weight:700" title="性价比高·款 · 频次 8">性价比高</span><span class="wc" style="font-size:36.2px;color:#1F3864;font-weight:700" title="光泽质感好·款 · 频次 7">光泽质感好</span><span class="wc" style="font-size:34.1px;color:#1F3864;font-weight:700" title="包装精致·款 · 频次 6">包装精致</span><span class="wc" style="font-size:34.1px;color:#1F3864;font-weight:700" title="大气高级·款 · 频次 6">大气高级</span><span class="wc" style="font-size:31.8px;color:#C9A227;font-weight:600" title="送礼场景·款 · 频次 5">送礼场景</span><span class="wc" style="font-size:31.8px;color:#C9A227;font-weight:600" title="佩戴舒适·款 · 频次 5">佩戴舒适</span><span class="wc" style="font-size:31.8px;color:#C9A227;font-weight:600" title="物流快·款 · 频次 5">物流快</span><span class="wc" style="font-size:29.3px;color:#C9A227;font-weight:600" title="质感好·款 · 频次 4">质感好</span><span class="wc" style="font-size:26.6px;color:#C9A227;font-weight:600" title="佩戴稳固·款 · 频次 3">佩戴稳固</span><span class="wc" style="font-size:26.6px;color:#C9A227;font-weight:600" title="不缠发不勾丝·款 · 频次 3">不缠发不勾丝</span><span class="wc" style="font-size:26.6px;color:#C9A227;font-weight:600" title="与图片一致·款 · 频次 3">与图片一致</span><span class="wc" style="font-size:23.4px;color:#C9A227;font-weight:600" title="客服服务好·款 · 频次 2">客服服务好</span><span class="wc" style="font-size:23.4px;color:#C9A227;font-weight:600" title="复购意愿·款 · 频次 2">复购意愿</span><span class="wc" style="font-size:19.5px;color:#5b6b86;font-weight:400" title="上镜出片·款 · 频次 1">上镜出片</span><span class="wc" style="font-size:19.5px;color:#5b6b86;font-weight:400" title="佩戴不过敏·款 · 频次 1">佩戴不过敏</span></div></div>
+   <div style="margin-top:6px"><span class="chip g">做工精细 ×10款</span><span class="chip g">性价比高 ×8款</span><span class="chip g">光泽质感好 ×7款</span><span class="chip g">包装精致 ×6款</span><span class="chip g">大气高级 ×6款</span><span class="chip g">送礼场景 ×5款</span><span class="chip g">佩戴舒适 ×5款</span><span class="chip g">物流快 ×5款</span><span class="chip g">质感好 ×4款</span><span class="chip g">佩戴稳固 ×3款</span><span class="chip g">不缠发不勾丝 ×3款</span><span class="chip g">与图片一致 ×3款</span></div>
   </div>
  </div>
 </section>
@@ -186,7 +235,7 @@ footer{padding:18px 0 30px;color:#888;font-size:12px;border-top:1px solid var(--
 <section class="panel" id="panel-plans">
  <div class="card">
   <h2 class="pt">差异化提案 Top3（要素拼接 × 有出处真实痛点 × 品类价带 · 机械生成可回溯 · D10 评审会现场投票）</h2>
-  <div class="grid3"><div class="card pcard" style="margin:0"><div style="font-weight:700;color:var(--navy)">#1 发饰 · 发簪×步摇</div><div class="muted" style="margin:2px 0 8px">A_已验证组合 · 排序分 34.8</div><div><span class="el chip">发簪</span><span class="el chip">步摇</span><span class="el chip">古风</span></div><h3 class="st">解决痛点</h3><div style="font-size:12.5px"><span class="chip r">高</span><b>价格偏高</b>（价格高于预期）<br><span class="muted">「包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时…」<a href="https://www.jd.com/phb/6144c047d5b0466ec4c5.html" target="_blank" rel="noopener">原文</a></span></div><h3 class="st">卖点（真实好评词）</h3><div><span class="chip g">做工精细 ×6</span><span class="chip g">光泽质感好 ×3</span><span class="chip g">佩戴舒适 ×3</span></div><h3 class="st">定价</h3><div style="font-size:12.5px">¥14.2–23.6（低价带(&lt;20元)）<br>毛利敏感性(假设)：<span class="chip">30%→61.9%</span><span class="chip">50%→42.3%</span><span class="chip">70%→22.2%</span></div><h3 class="st">风险</h3><div class="muted" style="color:var(--red);font-size:12px">真实差评待验证：材质标注与价格不符（镀银名不副实）— 包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,… ｜出处 https://www.jd.co</div><h3 class="st">红线约束</h3><div><span class="muted">无黑榜约束命中</span></div><h3 class="st">已有支撑商品</h3><ul style="font-size:12px;margin:4px 0 8px;padding-left:16px"><li><a href="https://www.am10.com/HGp5l2q54WY5k_Y5Q2a5/xl" target="_blank" rel="noopener">【原型·合并2款】2025新款黑檀木U型发簪古典国风步摇簪子女礼物头</a> ¥24.85/销量20,400</li><li><a href="https://www.jd.com/phb/6144ff06802b333bf1e1.html" target="_blank" rel="noopener">【原型·合并19款】伊黛儿黑檀木发簪女U型双钗木簪新中式高级感古风汉</a> ¥4.99/销量15,500</li></ul><div style="border-top:1px dashed var(--line);padding-top:8px"><button class="chip g" data-vote="p1">▲ 投它</button> <span class="muted">票数 <b data-vcount="p1">0</b> <span class="votebar"><i data-vbar="p1" style="width:0%"></i></span></span></div></div><div class="card pcard" style="margin:0"><div style="font-weight:700;color:var(--navy)">#2 颈饰 × 移植「礼品属性」</div><div class="muted" style="margin:2px 0 8px">B_跨品类移植 · 排序分 16.4</div><div><span class="el chip">礼品属性</span><span class="el chip">项链</span></div><h3 class="st">解决痛点</h3><div style="font-size:12.5px"><span class="chip ">低</span><b>绳线易断</b>（易断）<br><span class="muted">「线很容易就断了,掉了一地都是～～～…」<a href="https://www.jd.com/phb/key_6144c03455e31693c6c1.html" target="_blank" rel="noopener">原文</a></span></div><h3 class="st">卖点（真实好评词）</h3><div><span class="chip g">性价比高 ×1</span><span class="chip g">包装精致 ×1</span><span class="chip g">大气高级 ×1</span></div><h3 class="st">定价</h3><div style="font-size:12.5px">¥22.6–37.6（低价带(&lt;20元)）<br>毛利敏感性(假设)：<span class="chip">30%→62.1%</span><span class="chip">50%→41.9%</span><span class="chip">70%→21.9%</span></div><h3 class="st">风险</h3><div class="muted" style="color:var(--red);font-size:12px">该要素在颈饰渗透仅0.0%（指数0.00）：洼地也可能是需求未验证，需小单快反（50–100件）测款</div><h3 class="st">红线约束</h3><div><span class="muted">无黑榜约束命中</span></div><h3 class="st">已有支撑商品</h3><ul style="font-size:12px;margin:4px 0 8px;padding-left:16px"><li><a href="https://www.am10.com/HGp5l2q54WY5k_Y5Q2a5/xl" target="_blank" rel="noopener">【原型·合并2款】2025新款黑檀木U型发簪古典国风步摇簪子女礼物头</a> ¥24.85/销量20,400</li><li><a href="https://www.jd.com/phb/6144ff06802b333bf1e1.html" target="_blank" rel="noopener">【原型·合并19款】伊黛儿黑檀木发簪女U型双钗木簪新中式高级感古风汉</a> ¥4.99/销量15,500</li></ul><div style="border-top:1px dashed var(--line);padding-top:8px"><button class="chip g" data-vote="p2">▲ 投它</button> <span class="muted">票数 <b data-vcount="p2">0</b> <span class="votebar"><i data-vbar="p2" style="width:0%"></i></span></span></div></div><div style="margin-top:10px"><button class="chip" id="voteReset">清空投票</button><span class="muted"> 票数据存储在本机浏览器（localStorage），供路演现场计票</span></div></div>
+  <div class="grid3"><div class="card pcard" style="margin:0"><div style="font-weight:700;color:var(--navy)"><span class="rankchip">TOP 1</span> 发饰 · 发簪×步摇</div><div class="muted" style="margin:2px 0 8px">A_已验证组合 · 排序分 34.8</div><div><span class="el chip">发簪</span><span class="el chip">步摇</span><span class="el chip">古风</span></div><h3 class="st">解决痛点</h3><div style="font-size:12.5px"><span class="chip r">高</span><b>价格偏高</b>（价格高于预期）<br><span class="muted">「包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时…」<a href="https://www.jd.com/phb/6144c047d5b0466ec4c5.html" target="_blank" rel="noopener">原文</a></span></div><h3 class="st">卖点（真实好评词）</h3><div><span class="chip g">做工精细 ×6</span><span class="chip g">光泽质感好 ×3</span><span class="chip g">佩戴舒适 ×3</span></div><h3 class="st">定价</h3><div style="font-size:12.5px">¥14.2–23.6（低价带(&lt;20元)）<br>毛利敏感性(假设)：<span class="chip">30%→61.9%</span><span class="chip">50%→42.3%</span><span class="chip">70%→22.2%</span></div><h3 class="st">风险</h3><div class="muted" style="color:var(--red);font-size:12px">真实差评待验证：材质标注与价格不符（镀银名不副实）— 包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,… ｜出处 https://www.jd.co</div><h3 class="st">红线约束</h3><div><span class="muted">无黑榜约束命中</span></div><h3 class="st">已有支撑商品</h3><ul style="font-size:12px;margin:4px 0 8px;padding-left:16px"><li><a href="https://www.am10.com/HGp5l2q54WY5k_Y5Q2a5/xl" target="_blank" rel="noopener">【原型·合并2款】2025新款黑檀木U型发簪古典国风步摇簪子女礼物头</a> ¥24.85/销量20,400</li><li><a href="https://www.jd.com/phb/6144ff06802b333bf1e1.html" target="_blank" rel="noopener">【原型·合并19款】伊黛儿黑檀木发簪女U型双钗木簪新中式高级感古风汉</a> ¥4.99/销量15,500</li></ul><div style="border-top:1px dashed var(--line);padding-top:8px"><button class="chip g" data-vote="p1">▲ 投它</button> <span class="muted">票数 <b data-vcount="p1">0</b> <span class="votebar"><i data-vbar="p1" style="width:0%"></i></span></span></div></div><div class="card pcard" style="margin:0"><div style="font-weight:700;color:var(--navy)"><span class="rankchip">TOP 2</span> 颈饰 × 移植「礼品属性」</div><div class="muted" style="margin:2px 0 8px">B_跨品类移植 · 排序分 16.4</div><div><span class="el chip">礼品属性</span><span class="el chip">项链</span></div><h3 class="st">解决痛点</h3><div style="font-size:12.5px"><span class="chip ">低</span><b>绳线易断</b>（易断）<br><span class="muted">「线很容易就断了,掉了一地都是～～～…」<a href="https://www.jd.com/phb/key_6144c03455e31693c6c1.html" target="_blank" rel="noopener">原文</a></span></div><h3 class="st">卖点（真实好评词）</h3><div><span class="chip g">性价比高 ×1</span><span class="chip g">包装精致 ×1</span><span class="chip g">大气高级 ×1</span></div><h3 class="st">定价</h3><div style="font-size:12.5px">¥22.6–37.6（低价带(&lt;20元)）<br>毛利敏感性(假设)：<span class="chip">30%→62.1%</span><span class="chip">50%→41.9%</span><span class="chip">70%→21.9%</span></div><h3 class="st">风险</h3><div class="muted" style="color:var(--red);font-size:12px">该要素在颈饰渗透仅0.0%（指数0.00）：洼地也可能是需求未验证，需小单快反（50–100件）测款</div><h3 class="st">红线约束</h3><div><span class="muted">无黑榜约束命中</span></div><h3 class="st">已有支撑商品</h3><ul style="font-size:12px;margin:4px 0 8px;padding-left:16px"><li><a href="https://www.am10.com/HGp5l2q54WY5k_Y5Q2a5/xl" target="_blank" rel="noopener">【原型·合并2款】2025新款黑檀木U型发簪古典国风步摇簪子女礼物头</a> ¥24.85/销量20,400</li><li><a href="https://www.jd.com/phb/6144ff06802b333bf1e1.html" target="_blank" rel="noopener">【原型·合并19款】伊黛儿黑檀木发簪女U型双钗木簪新中式高级感古风汉</a> ¥4.99/销量15,500</li></ul><div style="border-top:1px dashed var(--line);padding-top:8px"><button class="chip g" data-vote="p2">▲ 投它</button> <span class="muted">票数 <b data-vcount="p2">0</b> <span class="votebar"><i data-vbar="p2" style="width:0%"></i></span></span></div></div><div style="margin-top:10px"><button class="chip" id="voteReset">清空投票</button><span class="muted"> 票数据存储在本机浏览器（localStorage），供路演现场计票</span></div></div>
  </div>
  <div class="card">
   <h2 class="pt">全候选池（14 个：6 已验证组合 + 8 跨品类移植）</h2>
@@ -207,7 +256,7 @@ footer{padding:18px 0 30px;color:#888;font-size:12px;border-top:1px solid var(--
 <section class="panel" id="panel-flow">
  <div class="card">
   <h2 class="pt">四子环节链路状态（榜单采集 → 要素抽取 → 横向对比 → 差异化提案）</h2>
-  <div class="grid2"><div class="card" style="margin:0"><b>① 榜单采集</b> <span class="chip g">v3 · 压缩</span><p style="font-size:12.5px;color:#555;margin:6px 0 2px">70 条代表性原型 · 由 198 条真实记录按品类×材质×要素归并、全部可回溯（merged_products/source_url） · 6 品类 · 4 类可直连数据源（淘宝chanpin/星期三/爱美日记/京东品牌榜）</p><div class="muted">产物：国风榜单采集_merged_v2_A.{json,xlsx}</div></div><div class="card" style="margin:0"><b>② 要素抽取</b> <span class="chip g">v2 · 完成</span><p style="font-size:12.5px;color:#555;margin:6px 0 2px">173 要素 + 51 材质归一 · 共现矩阵 · 67 条评价语料 → 17 条有出处痛点证据；数据闸门通过</p><div class="muted">产物：国风要素抽取_v2_A.{json,xlsx}</div></div><div class="card" style="margin:0"><b>③ 横向对比</b> <span class="chip g">v1 · 完成</span><p style="font-size:12.5px;color:#555;margin:6px 0 2px">适配判定 契合159/需改造14；红榜1条 · 黑榜27条 · B复核规则9条；渗透矩阵60要素×6品类</p><div class="muted">产物：国风横向对比_v1_A.{json,xlsx}</div></div><div class="card" style="margin:0"><b>④ 差异化提案</b> <span class="chip g">v1 · 完成</span><p style="font-size:12.5px;color:#555;margin:6px 0 2px">14 候选（组合6+移植8）→ Top3；毛利为敏感性假设，1688 真实报价待回填</p><div class="muted">产物：国风差异化提案_v1_A.{json,xlsx}</div></div></div>
+  <div class="grid2"><div class="card" style="margin:0"><b>① 榜单采集</b> <span class="chip g">v3 · 压缩</span><p style="font-size:12.5px;color:#555;margin:6px 0 2px">70 条代表性原型 · 由 198 条真实记录按品类×材质×要素归并、全部可回溯（merged_products/source_url） · 6 品类 · 需求侧直连源（淘宝chanpin/星期三/爱美日记/京东品牌榜） + 供给侧阿里巴巴1688供货价快照</p><div class="muted">产物：国风榜单采集_merged_v2_A.{json,xlsx}</div></div><div class="card" style="margin:0"><b>② 要素抽取</b> <span class="chip g">v2 · 完成</span><p style="font-size:12.5px;color:#555;margin:6px 0 2px">173 要素 + 51 材质归一 · 共现矩阵 · 67 条评价语料 → 17 条有出处痛点证据；数据闸门通过</p><div class="muted">产物：国风要素抽取_v2_A.{json,xlsx}</div></div><div class="card" style="margin:0"><b>③ 横向对比</b> <span class="chip g">v1 · 完成</span><p style="font-size:12.5px;color:#555;margin:6px 0 2px">适配判定 契合159/需改造14；红榜1条 · 黑榜27条 · B复核规则9条；渗透矩阵60要素×6品类</p><div class="muted">产物：国风横向对比_v1_A.{json,xlsx}</div></div><div class="card" style="margin:0"><b>④ 差异化提案</b> <span class="chip g">v1 · 完成</span><p style="font-size:12.5px;color:#555;margin:6px 0 2px">14 候选（组合6+移植8）→ Top3；已接入阿里巴巴1688供货价带快照（见「阿里巴巴选品」页），毛利敏感性待逐SKU人工询价精修</p><div class="muted">产物：国风差异化提案_v1_A.{json,xlsx}</div></div></div>
   <p class="muted">换市场只改 market_config.py（品类/平台/价带/词典）与 redlines_*.py（红线库），分析逻辑与本页数据结构不变——「可迭代」的落点。</p>
  </div>
  <div class="grid2">
@@ -226,7 +275,7 @@ footer{padding:18px 0 30px;color:#888;font-size:12px;border-top:1px solid var(--
  </div>
  <div class="card">
   <h2 class="pt">运行日志与产物清单（文件命名：日期_环节_版本_负责人）</h2>
-  <div style="overflow-x:auto"><table class="tb"><thead><tr><th>产物</th><th>大小KB</th><th>更新时间</th><th>说明</th></tr></thead><tbody><tr><td>2026-10-29_国风榜单采集_merged_v2_A.json</td><td>130</td><td>2026-10-29 20:56</td><td>环节1 明细</td></tr><tr><td>2026-10-29_国风榜单采集_merged_v2_A.xlsx</td><td>24</td><td>2026-10-29 20:56</td><td>环节1 明细表</td></tr><tr><td>2026-10-29_国风要素抽取_v2_A.json</td><td>259</td><td>2026-10-29 20:56</td><td>环节2 分析</td></tr><tr><td>2026-10-29_国风要素抽取_v2_A.xlsx</td><td>62</td><td>2026-10-29 20:56</td><td>环节2 分析表</td></tr><tr><td>2026-10-29_国风横向对比_v1_A.json</td><td>153</td><td>2026-10-29 20:56</td><td>环节3 适配矩阵</td></tr><tr><td>2026-10-29_国风横向对比_v1_A.xlsx</td><td>42</td><td>2026-10-29 20:56</td><td>环节3 总表</td></tr><tr><td>2026-10-29_国风差异化提案_v1_A.json</td><td>29</td><td>2026-10-29 20:56</td><td>环节4 提案</td></tr><tr><td>2026-10-29_国风差异化提案_v1_A.xlsx</td><td>14</td><td>2026-10-29 20:56</td><td>环节4 方案表</td></tr><tr><td>2026-10-29_国风自检报告_v2_A.json</td><td>4</td><td>2026-10-29 20:56</td><td>链路自检</td></tr><tr><td>新国风首饰选品_全链路结果总表_2026-10-29.xlsx</td><td>60</td><td>2026-10-29 20:56</td><td>全链路总表(14页)</td></tr></tbody></table></div>
+  <div style="overflow-x:auto"><table class="tb"><thead><tr><th>产物</th><th>大小KB</th><th>更新时间</th><th>说明</th></tr></thead><tbody><tr><td>2026-10-29_国风榜单采集_merged_v2_A.json</td><td>130</td><td>2026-10-29 20:56</td><td>环节1 明细</td></tr><tr><td>2026-10-29_国风榜单采集_merged_v2_A.xlsx</td><td>24</td><td>2026-10-29 20:56</td><td>环节1 明细表</td></tr><tr><td>2026-10-29_国风要素抽取_v2_A.json</td><td>259</td><td>2026-10-29 20:56</td><td>环节2 分析</td></tr><tr><td>2026-10-29_国风要素抽取_v2_A.xlsx</td><td>62</td><td>2026-10-29 20:56</td><td>环节2 分析表</td></tr><tr><td>2026-10-29_国风横向对比_v1_A.json</td><td>153</td><td>2026-10-29 20:56</td><td>环节3 适配矩阵</td></tr><tr><td>2026-10-29_国风横向对比_v1_A.xlsx</td><td>42</td><td>2026-10-29 20:56</td><td>环节3 总表</td></tr><tr><td>2026-10-29_国风差异化提案_v1_A.json</td><td>29</td><td>2026-10-29 20:56</td><td>环节4 提案</td></tr><tr><td>2026-10-29_国风差异化提案_v1_A.xlsx</td><td>14</td><td>2026-10-29 20:56</td><td>环节4 方案表</td></tr><tr><td>2026-10-29_国风自检报告_v2_A.json</td><td>4</td><td>2026-10-29 20:56</td><td>链路自检</td></tr><tr><td>新国风首饰选品_全链路结果总表_2026-10-29.xlsx</td><td>60</td><td>2026-10-29 20:56</td><td>全链路总表(14页)</td></tr><tr><td>2026-10-29_国风阿里巴巴选品_1688_v1_A.json</td><td>4</td><td>2026-10-30 09:41</td><td>环节1 供货端·阿里巴巴1688</td></tr></tbody></table></div>
  </div>
  <div class="card">
   <h2 class="pt">人机协作分工（页面标注口径）</h2>
@@ -239,8 +288,8 @@ footer{padding:18px 0 30px;color:#888;font-size:12px;border-top:1px solid var(--
  </div>
 </section>
 </div>
-<footer><div class="wrap">千问办公应用大赛·市场营销赛道 · 成员A 工具链与数据流 | 构建：build_dashboard.py 于 2026-10-29 20:57 | 渐进增强：内联保底样式 + 纯CSS兜底图表（零依赖，离线必然可见）；Tailwind/ECharts/Alpine 经多CDN源（境内优先）非阻塞加载，成功后自动升级为交互图表，任一不可达不留空白 | 数据未核验条目均标「AI采集·待核验」，来源链接可点击复核</div></footer>
-<script id="page-data" type="application/json">{"elems":[["汉服配饰",37,52.9],["古风",35,50.0],["流苏",30,42.9],["发簪",25,35.7],["新中式",25,35.7],["步摇",21,30.0],["礼品属性",21,30.0],["原创设计",19,27.1],["国风",19,27.1],["旗袍配饰",18,25.7],["发钗",16,22.9],["项链",15,21.4],["复古",14,20.0],["花朵",13,18.6],["高级感",11,15.7],["套装",11,15.7],["百搭",10,14.3],["小众",10,14.3],["耳环",10,14.3],["古典",9,12.9],["简约",9,12.9],["珍珠",9,12.9],["耳钉",9,12.9],["品牌款",8,11.4],["手工",8,11.4]],"bands":[{"name":"低价带(\u003c20元)","value":33},{"name":"中价带(20-100元)","value":14},{"name":"高价带(>100元)","value":3}],"mats":[{"name":"合金","value":19},{"name":"珍珠","value":19},{"name":"S925银","value":9},{"name":"银质","value":8},{"name":"和田玉","value":7},{"name":"黄金","value":7},{"name":"黑檀木","value":6},{"name":"苗银","value":5},{"name":"玉质","value":5},{"name":"纯银","value":5},{"name":"铜质","value":4},{"name":"足银","value":4}],"pains":[{"kw":"做工瑕疵","zh":"做工/质感不达预期","sev":"high","prods":3,"rc":41,"evidence":"嗯，看起来还可以，买来给孩子留着过年配汉服的，买了好几个，孩子都很喜欢，质感一般，还可以吧"},{"kw":"做工瑕疵","zh":"做工/质感不达预期","sev":"high","prods":3,"rc":43,"evidence":"做工一般,背后有划伤。着急出门留下了"},{"kw":"尺寸不符预期","zh":"尺寸与预期不符","sev":"high","prods":3,"rc":1000,"evidence":"光泽度:挺好,淡水珍珠 珍珠大小:适中 圆润度:挺圆的,还可以 项链长度:比想象中要短一些"},{"kw":"尺寸不符预期","zh":"尺寸与预期不符","sev":"high","prods":3,"rc":200,"evidence":"包装完好,相信周大福品牌,色泽比较偏亮,56号有点偏紧了😄"},{"kw":"做工瑕疵","zh":"做工/质感不达预期","sev":"high","prods":3,"rc":200,"evidence":"还不错,很好看,如果能无瑕疵就更好了 颜色光泽:无色差 佩戴效果:好看"},{"kw":"尺寸不符预期","zh":"尺寸与预期不符","sev":"high","prods":3,"rc":200,"evidence":"包装的非常精美,稍微有点包装过度了,因为是礼盒装,没想到他礼盒这么大,然后本体其实很小不占地方,总体来讲还是非常精美的,老婆也非常满意"},{"kw":"价格高于预期","zh":"价格偏高","sev":"high","prods":2,"rc":20000,"evidence":"还不错,银价比之前贵了好多, 可调节尺寸:可以"},{"kw":"价格高于预期","zh":"价格偏高","sev":"high","prods":2,"rc":20000,"evidence":"包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,表面是镀银的,还是有点小贵,毕竟只是镀银,但是纯银的又比较软"},{"kw":"镀银名不副实","zh":"材质标注与价格不符","sev":"high","prods":1,"rc":20000,"evidence":"包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,表面是镀银的,还是有点小贵,毕竟只是镀银,但是纯银的又比较软"},{"kw":"材质偏软","zh":"足银偏软易变形","sev":"high","prods":1,"rc":20000,"evidence":"包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,表面是镀银的,还是有点小贵,毕竟只是镀银,但是纯银的又比较软"},{"kw":"圆润度不足","zh":"珠体不够圆","sev":"medium","prods":1,"rc":1000,"evidence":"珍珠项链妈妈很满意,有礼盒带证书,珠子大小还可以不是很圆戴上效果还可以,耳钉很好看,冲这个价钱非常性价比了"},{"kw":"易断","zh":"绳线易断","sev":"low","prods":1,"rc":100,"evidence":"线很容易就断了,掉了一地都是～～～"},{"kw":"过敏担忧","zh":"材质过敏不确定","sev":"low","prods":1,"rc":100,"evidence":"套盒很实惠,珠子匀称,有亮度。送人自己带都很合适。包装完整,物流很快上午拍的,下午就送到啦。一次拍了两套,其中一套没有送手提袋,耳饰上有925银的钢印,没有带,不知道过不过敏"},{"kw":"配件缺失","zh":"随附配件缺失","sev":"low","prods":1,"rc":100,"evidence":"套盒很实惠,珠子匀称,有亮度。送人自己带都很合适。包装完整,物流很快上午拍的,下午就送到啦。一次拍了两套,其中一套没有送手提袋,耳饰上有925银的钢印,没有带,不知道过不过敏"},{"kw":"佩戴门槛高","zh":"需先盘发才能佩戴","sev":"low","prods":1,"rc":500,"evidence":"风钗好看漂亮,就是须先挽好头发再插上凤钗"},{"kw":"稳固性不足","zh":"插不发/易滑落","sev":"low","prods":1,"rc":200,"evidence":"发簪零散在头发上插不住，原因是因为头发太多了，要滑起走，无奈只能插一根木头的簪子一起在头上"},{"kw":"包装过度","zh":"包装超出实物体量","sev":"low","prods":1,"rc":200,"evidence":"包装的非常精美,稍微有点包装过度了,因为是礼盒装,没想到他礼盒这么大,然后本体其实很小不占地方,总体来讲还是非常精美的,老婆也非常满意"}],"negs":[["做工瑕疵",3],["尺寸不符预期",3],["价格高于预期",2],["佩戴门槛高",1],["材质偏软",1],["镀银名不副实",1],["包装过度",1],["稳固性不足",1],["易断",1],["圆润度不足",1]]}</script>
+<footer><div class="wrap">千问办公应用大赛·市场营销赛道 · 成员A 工具链与数据流 | 构建：build_dashboard.py 于 2026-10-30 10:18 | 渐进增强：内联保底样式 + 纯CSS兜底图表（零依赖，离线必然可见）；Tailwind/ECharts/Alpine 经多CDN源（境内优先）非阻塞加载，成功后自动升级为交互图表，任一不可达不留空白 | 数据未核验条目均标「AI采集·待核验」，来源链接可点击复核</div></footer>
+<script id="page-data" type="application/json">{"elems":[["汉服配饰",37,52.9],["古风",35,50.0],["流苏",30,42.9],["发簪",25,35.7],["新中式",25,35.7],["步摇",21,30.0],["礼品属性",21,30.0],["原创设计",19,27.1],["国风",19,27.1],["旗袍配饰",18,25.7],["发钗",16,22.9],["项链",15,21.4],["复古",14,20.0],["花朵",13,18.6],["高级感",11,15.7],["套装",11,15.7],["百搭",10,14.3],["小众",10,14.3],["耳环",10,14.3],["古典",9,12.9],["简约",9,12.9],["珍珠",9,12.9],["耳钉",9,12.9],["品牌款",8,11.4],["手工",8,11.4]],"bands":[{"name":"低价带(\u003c20元)","value":33},{"name":"中价带(20-100元)","value":14},{"name":"高价带(>100元)","value":3}],"mats":[{"name":"合金","value":19},{"name":"珍珠","value":19},{"name":"S925银","value":9},{"name":"银质","value":8},{"name":"和田玉","value":7},{"name":"黄金","value":7},{"name":"黑檀木","value":6},{"name":"苗银","value":5},{"name":"玉质","value":5},{"name":"纯银","value":5},{"name":"铜质","value":4},{"name":"足银","value":4}],"pains":[{"kw":"做工瑕疵","zh":"做工/质感不达预期","sev":"high","prods":3,"rc":41,"evidence":"嗯，看起来还可以，买来给孩子留着过年配汉服的，买了好几个，孩子都很喜欢，质感一般，还可以吧"},{"kw":"做工瑕疵","zh":"做工/质感不达预期","sev":"high","prods":3,"rc":43,"evidence":"做工一般,背后有划伤。着急出门留下了"},{"kw":"尺寸不符预期","zh":"尺寸与预期不符","sev":"high","prods":3,"rc":1000,"evidence":"光泽度:挺好,淡水珍珠 珍珠大小:适中 圆润度:挺圆的,还可以 项链长度:比想象中要短一些"},{"kw":"尺寸不符预期","zh":"尺寸与预期不符","sev":"high","prods":3,"rc":200,"evidence":"包装完好,相信周大福品牌,色泽比较偏亮,56号有点偏紧了😄"},{"kw":"做工瑕疵","zh":"做工/质感不达预期","sev":"high","prods":3,"rc":200,"evidence":"还不错,很好看,如果能无瑕疵就更好了 颜色光泽:无色差 佩戴效果:好看"},{"kw":"尺寸不符预期","zh":"尺寸与预期不符","sev":"high","prods":3,"rc":200,"evidence":"包装的非常精美,稍微有点包装过度了,因为是礼盒装,没想到他礼盒这么大,然后本体其实很小不占地方,总体来讲还是非常精美的,老婆也非常满意"},{"kw":"价格高于预期","zh":"价格偏高","sev":"high","prods":2,"rc":20000,"evidence":"还不错,银价比之前贵了好多, 可调节尺寸:可以"},{"kw":"价格高于预期","zh":"价格偏高","sev":"high","prods":2,"rc":20000,"evidence":"包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,表面是镀银的,还是有点小贵,毕竟只是镀银,但是纯银的又比较软"},{"kw":"镀银名不副实","zh":"材质标注与价格不符","sev":"high","prods":1,"rc":20000,"evidence":"包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,表面是镀银的,还是有点小贵,毕竟只是镀银,但是纯银的又比较软"},{"kw":"材质偏软","zh":"足银偏软易变形","sev":"high","prods":1,"rc":20000,"evidence":"包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,表面是镀银的,还是有点小贵,毕竟只是镀银,但是纯银的又比较软"},{"kw":"圆润度不足","zh":"珠体不够圆","sev":"medium","prods":1,"rc":1000,"evidence":"珍珠项链妈妈很满意,有礼盒带证书,珠子大小还可以不是很圆戴上效果还可以,耳钉很好看,冲这个价钱非常性价比了"},{"kw":"易断","zh":"绳线易断","sev":"low","prods":1,"rc":100,"evidence":"线很容易就断了,掉了一地都是～～～"},{"kw":"过敏担忧","zh":"材质过敏不确定","sev":"low","prods":1,"rc":100,"evidence":"套盒很实惠,珠子匀称,有亮度。送人自己带都很合适。包装完整,物流很快上午拍的,下午就送到啦。一次拍了两套,其中一套没有送手提袋,耳饰上有925银的钢印,没有带,不知道过不过敏"},{"kw":"配件缺失","zh":"随附配件缺失","sev":"low","prods":1,"rc":100,"evidence":"套盒很实惠,珠子匀称,有亮度。送人自己带都很合适。包装完整,物流很快上午拍的,下午就送到啦。一次拍了两套,其中一套没有送手提袋,耳饰上有925银的钢印,没有带,不知道过不过敏"},{"kw":"佩戴门槛高","zh":"需先盘发才能佩戴","sev":"low","prods":1,"rc":500,"evidence":"风钗好看漂亮,就是须先挽好头发再插上凤钗"},{"kw":"稳固性不足","zh":"插不发/易滑落","sev":"low","prods":1,"rc":200,"evidence":"发簪零散在头发上插不住，原因是因为头发太多了，要滑起走，无奈只能插一根木头的簪子一起在头上"},{"kw":"包装过度","zh":"包装超出实物体量","sev":"low","prods":1,"rc":200,"evidence":"包装的非常精美,稍微有点包装过度了,因为是礼盒装,没想到他礼盒这么大,然后本体其实很小不占地方,总体来讲还是非常精美的,老婆也非常满意"}],"negs":[["做工瑕疵",3],["尺寸不符预期",3],["价格高于预期",2],["佩戴门槛高",1],["材质偏软",1],["镀银名不副实",1],["包装过度",1],["稳固性不足",1],["易断",1],["圆润度不足",1]],"pos":[["做工精细",10],["性价比高",8],["光泽质感好",7],["包装精致",6],["大气高级",6],["送礼场景",5],["佩戴舒适",5],["物流快",5],["质感好",4],["佩戴稳固",3],["不缠发不勾丝",3],["与图片一致",3],["客服服务好",2],["复购意愿",2],["上镜出片",1],["佩戴不过敏",1]],"supply":{"mats":[["S925银",33],["檀木",22],["珐琅",19],["珍珠",18],["醋酸",12],["合金",10],["花丝",10],["水晶",7],["烧蓝",6],["木质",6],["玉髓",5],["和田玉",5],["琉璃",4],["玛瑙",3],["翡翠",3],["电镀",3]],"bands":{"hair_accessory":{"label":"发饰（发簪/步摇/头饰）","wholesale_low":0.5,"wholesale_high":6.0,"main_material":"合金 / 木质 / 醋酸（主流）","premium_note":"S925银 / 花丝 / 珐琅工艺款约 8.4–755，属高端带"},"necklace":{"label":"颈饰（项链/吊坠/锁骨链/毛衣链/璎珞）","wholesale_low":5.0,"wholesale_high":52.0,"main_material":"玉髓 / 玛瑙 / 珍珠 / 琉璃","premium_note":"岫玉璎珞长项链约 118，属高端带"},"earring":{"label":"耳饰（耳环/耳钉/耳坠）","wholesale_low":2.0,"wholesale_high":33.0,"main_material":"哑金 / 琉璃 / 仿玉石 / 合金","premium_note":"琉璃做旧款约到 33"},"hand_jewelry":{"label":"手饰（手链/手串/手镯）","wholesale_low":0.6,"wholesale_high":26.0,"main_material":"琉璃 / 珍珠 / 木质 / 编绳","premium_note":"沉香/南红/蜜蜡大漆款约到 26.4"},"pendant_brooch":{"label":"佩饰（背云/压襟/胸坠）","wholesale_low":3.0,"wholesale_high":30.0,"main_material":"合金 / 玉髓 / 滴油","premium_note":"汉服背云/压襟多用滴油+仿玉"},"gift_set":{"label":"礼盒套装","wholesale_low":6.0,"wholesale_high":60.0,"main_material":"合金+织锦盒 / 925银组合","premium_note":"套装起订量更高，供货价随件数浮动"}}}}</script>
 <script>document.documentElement.classList.add('js');
 var D=null;try{D=JSON.parse(document.getElementById('page-data').textContent)}catch(e){}
 // ---- 页签（原生，保证零依赖可切换） ----
@@ -278,38 +327,54 @@ var D=null;try{D=JSON.parse(document.getElementById('page-data').textContent)}ca
   try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}paint();});});
  var rst=document.getElementById('voteReset');if(rst)rst.addEventListener('click',function(){try{localStorage.removeItem(KEY)}catch(e){}paint();});
  paint();})();
-// ---- 图表增强：先渲染纯CSS兜底图（零依赖，必然可见）；ECharts 从多个境内优先源动态加载成功后再升级 ----
+// ---- 渲染层：先纯CSS兜底图+词云（零依赖，必然可见）；ECharts 多源加载成功后升级；可在刷新数据后整体重绘 ----
 (function(){
  if(!D)return;
  var PIE=['#C9A227','#1F3864','#8FA6C9','#2E7D32','#B26A00','#7A4988','#3A7CA5','#C0392B','#16A085','#8a8f98','#D98880','#7D6608'];
+ var GOLDC='#C9A227',NAVYC='#1F3864';
  var SEVZH={high:'高',medium:'中',low:'低'},SEVC={high:'#C00000',medium:'#B26A00',low:'#8a8f98'};
  function esc(s){return String(s).replace(/[&<>"]/g,function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]})}
- // 兜底：横向条形
  function fbBars(id,rows,color){var el=document.getElementById(id);if(!el)return;
   el.classList.add('chart-fb');el.style.height='auto';
   var max=0;rows.forEach(function(r){max=Math.max(max,r[1])});max=max||1;
   el.innerHTML='<div class="fbchart">'+rows.map(function(r){
    return '<div class="fbrow"><span class="lbl" title="'+esc(r[0])+'">'+esc(r[0])+'</span>'+
-    '<span class="fb"><i style="width:'+Math.max(2,Math.round(r[1]/max*100))+'%;background:'+(r[2]||color||'#1F3864')+'"></i></span>'+
+    '<span class="fb"><i style="width:'+Math.max(2,Math.round(r[1]/max*100))+'%;background:'+(r[2]||color||NAVYC)+'"></i></span>'+
     '<span class="val">'+r[1]+'</span></div>'}).join('')+'</div>';}
- // 兜底：占比堆叠条 + 图例
  function fbPie(id,rows){var el=document.getElementById(id);if(!el)return;
   el.classList.add('chart-fb');el.style.height='auto';
   var tot=rows.reduce(function(s,r){return s+r.value},0)||1;
-  var h='<div class="fbchart"><div class="stack">'+rows.map(function(r,i){
+  el.innerHTML='<div class="fbchart"><div class="stack">'+rows.map(function(r,i){
     return '<i style="width:'+(r.value/tot*100).toFixed(1)+'%;background:'+(r.color||PIE[i%PIE.length])+'" title="'+esc(r.name)+'"></i>'}).join('')+'</div>'+
-   rows.map(function(r,i){return '<div class="lg"><span class="dot" style="background:'+(r.color||PIE[i%PIE.length])+'"></span>'+esc(r.name)+' <b>'+r.value+'</b> · '+(r.value/tot*100).toFixed(1)+'%</div>'}).join('')+'</div>';
-  el.innerHTML=h;}
- function fallbackAll(){
-  fbBars('chElems',D.elems||[],'#1F3864');
-  fbBars('chNeg',D.negs||[],'#C00000');
-  fbBars('chPains',(D.pains||[]).map(function(x){return [x.zh+'（'+(SEVZH[x.sev]||x.sev)+'严重度）',x.prods,SEVC[x.sev]||'#999']}),'#C00000');
-  fbPie('chBands',(D.bands||[]).map(function(x,i){return {name:x.name,value:x.value,color:[GOLDC,NAVYC,'#8FA6C9'][i%3]}}));
-  fbPie('chMats',(D.mats||[]).map(function(x){return {name:x.name,value:x.value}}));
+   rows.map(function(r,i){return '<div class="lg"><span class="dot" style="background:'+(r.color||PIE[i%PIE.length])+'"></span>'+esc(r.name)+' <b>'+r.value+'</b> · '+(r.value/tot*100).toFixed(1)+'%</div>'}).join('')+'</div>';}
+ // 词云（与后端同算法；用于数据刷新后整体重绘）
+ function wordCloud(pairs,unit){
+  pairs=(pairs||[]).filter(function(p){return p&&p[0]}).slice(0,30);
+  if(!pairs.length)return '<span class="muted">无数据</span>';
+  var mx=0;pairs.forEach(function(p){mx=Math.max(mx,p[1])});mx=mx||1;
+  var tiers=[[0.66,NAVYC],[0.33,GOLDC],[0,'#5b6b86']];
+  return '<div class="wordcloud">'+pairs.map(function(p){
+   var r=Math.pow(p[1]/mx,0.6),fs=12+30*r,t=tiers.filter(function(x){return r>=x[0]})[0];
+   var fw=r>=0.66?700:(r>=0.33?600:400);
+   return '<span class="wc" style="font-size:'+fs.toFixed(1)+'px;color:'+t[1]+';font-weight:'+fw+'" title="'+esc(p[0]+(unit?'·'+unit+' 频次 '+p[1]:''))+'">'+esc(p[0])+'</span>';
+  }).join('')+'</div>';
  }
- var GOLDC='#C9A227',NAVYC='#1F3864';
- fallbackAll();
- // ---- 多源动态加载（境内优先，超时/失败自动换源） ----
+ function setWc(id,html){var el=document.getElementById(id);if(el)el.innerHTML=html;}
+ function renderClouds(d){
+  setWc('wcElems',wordCloud(d.elems,'款'));
+  setWc('wcPos',wordCloud(d.pos,'款'));
+  if(d.supply&&d.supply.mats)setWc('wcMat',wordCloud(d.supply.mats,'次'));
+ }
+ function renderFallback(d){
+  fbBars('chElems',d.elems||[],NAVYC);
+  fbBars('chNeg',d.negs||[],'#C00000');
+  fbBars('chPains',(d.pains||[]).map(function(x){return [x.zh+'（'+(SEVZH[x.sev]||x.sev)+'）',x.prods,SEVC[x.sev]||'#999']}),'#C00000');
+  fbPie('chBands',(d.bands||[]).map(function(x,i){return {name:x.name,value:x.value,color:[GOLDC,NAVYC,'#8FA6C9'][i%3]}}));
+  fbPie('chMats',(d.mats||[]).map(function(x){return {name:x.name,value:x.value}}));
+  renderClouds(d);
+ }
+ renderFallback(D);
+ // ---- ECharts 多源动态加载（境内优先，超时/失败自动换源）；ready 后整体升级为交互图 ----
  function tryLoad(urls,test,done){var i=0;
   (function next(){if(i>=urls.length){done(false);return;}
    var settled=false,s=document.createElement('script');s.src=urls[i++];
@@ -321,37 +386,95 @@ var D=null;try{D=JSON.parse(document.getElementById('page-data').textContent)}ca
   'https://cdn.staticfile.net/echarts/5.4.3/echarts.min.js',
   'https://unpkg.com/echarts@5.4.3/dist/echarts.min.js',
   'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js'];
- tryLoad(EURLS,function(){return !!window.echarts},function(ok){if(!ok)return; // 升级失败：CSS兜底图已可见
-  var CH={chElems:420,chBands:300,chMats:300,chPains:380,chNeg:300},charts=[];
+ var ECHARTS_READY=false,charts=[];
+ function disposeCharts(){charts.forEach(function(c){try{c.dispose()}catch(e){}});charts=[];}
+ function buildECharts(d){
+  if(!ECHARTS_READY||!window.echarts)return;
+  disposeCharts();
+  var CH={chElems:420,chBands:300,chMats:300,chPains:380,chNeg:300};
   function mk(id){var el=document.getElementById(id);if(!el)return null;
    el.classList.remove('chart-fb');el.style.height=(CH[id]||300)+'px';el.innerHTML='';
    var c=echarts.init(el);charts.push(c);return c;}
   try{
-   var c1=mk('chElems');if(c1&&D.elems&&D.elems.length){var e2=D.elems.slice(0,25).reverse();
+   var c1=mk('chElems');if(c1&&d.elems&&d.elems.length){var e2=d.elems.slice(0,25).reverse();
     c1.setOption({grid:{left:90,right:40,top:8,bottom:8},tooltip:{},
      xAxis:{type:'value',axisLabel:{fontSize:10}},yAxis:{type:'category',data:e2.map(function(x){return x[0]}),axisLabel:{fontSize:11}},
      series:[{type:'bar',data:e2.map(function(x){return x[1]}),label:{show:true,position:'right',fontSize:10},itemStyle:{color:NAVYC}}]});}
-   var c2=mk('chBands');if(c2&&D.bands)c2.setOption({tooltip:{trigger:'item',formatter:'{b}<br>{c}款（{d}%）'},legend:{bottom:0},
-     series:[{type:'pie',radius:['42%','68%'],data:D.bands,color:[GOLDC,NAVYC,'#8FA6C9'],label:{formatter:'{b}\n{c}款'}}]});
-   var c3=mk('chMats');if(c3&&D.mats)c3.setOption({tooltip:{trigger:'item'},series:[{type:'pie',radius:['40%','66%'],data:D.mats,label:{fontSize:10}}]});
-   var c4=mk('chPains');if(c4&&D.pains)c4.setOption({grid:{left:40,right:20,top:30,bottom:80},
-     tooltip:{formatter:function(p){var x=D.pains[p.dataIndex];return '<b>'+x.zh+'</b>（'+(SEVZH[x.sev]||x.sev)+'）<br>复现 '+x.prods+' 款 · 评论量级 '+x.rc+'<br>「'+x.evidence.slice(0,36)+'…」'}},
-     xAxis:{type:'category',data:D.pains.map(function(x){return x.zh}),axisLabel:{interval:0,rotate:40,fontSize:10}},
+   var c2=mk('chBands');if(c2&&d.bands)c2.setOption({tooltip:{trigger:'item',formatter:'{b}<br>{c}款（{d}%）'},legend:{bottom:0},
+     series:[{type:'pie',radius:['42%','68%'],data:d.bands,color:[GOLDC,NAVYC,'#8FA6C9'],label:{formatter:'{b}\n{c}款'}}]});
+   var c3=mk('chMats');if(c3&&d.mats)c3.setOption({tooltip:{trigger:'item'},series:[{type:'pie',radius:['40%','66%'],data:d.mats,label:{fontSize:10}}]});
+   var c4=mk('chPains');if(c4&&d.pains)c4.setOption({grid:{left:40,right:20,top:30,bottom:80},
+     tooltip:{formatter:function(p){var x=d.pains[p.dataIndex];return '<b>'+x.zh+'</b>（'+(SEVZH[x.sev]||x.sev)+'）<br>复现 '+x.prods+' 款 · 评论量级 '+x.rc+'<br>「'+x.evidence.slice(0,36)+'…」'}},
+     xAxis:{type:'category',data:d.pains.map(function(x){return x.zh}),axisLabel:{interval:0,rotate:40,fontSize:10}},
      yAxis:{type:'value',name:'复现款数',minInterval:1},
-     series:[{type:'bar',data:D.pains.map(function(x){return{value:x.prods,itemStyle:{color:SEVC[x.sev]||'#999'}}}),label:{show:true,position:'top',fontSize:10}}]});
-   var c5=mk('chNeg');if(c5&&D.negs&&D.negs.length){var n2=D.negs.slice().reverse();
+     series:[{type:'bar',data:d.pains.map(function(x){return{value:x.prods,itemStyle:{color:SEVC[x.sev]||'#999'}}}),label:{show:true,position:'top',fontSize:10}}]});
+   var c5=mk('chNeg');if(c5&&d.negs&&d.negs.length){var n2=d.negs.slice().reverse();
     c5.setOption({grid:{left:90,right:30,top:8,bottom:8},tooltip:{},
      xAxis:{type:'value',minInterval:1},yAxis:{type:'category',data:n2.map(function(x){return x[0]}),axisLabel:{fontSize:11}},
      series:[{type:'bar',data:n2.map(function(x){return x[1]}),label:{show:true,position:'right'},itemStyle:{color:'#C00000'}}]});}
-   window.addEventListener('resize',function(){charts.forEach(function(c){c.resize()})});
    window.__resizeCharts=function(){charts.forEach(function(c){c.resize()})};
-  }catch(e){/* 升级失败则保留CSS兜底图 */}
- });
+  }catch(e){renderFallback(d);}
+ }
+ tryLoad(EURLS,function(){return !!window.echarts},function(ok){if(!ok)return;
+  ECHARTS_READY=true;buildECharts(D);});
+ window.addEventListener('resize',function(){if(window.__resizeCharts)window.__resizeCharts();});
+ // ---- 整体应用新数据（刷新用）：重设 D，重绘兜底图/词云，若 ECharts 已就绪则重绘交互图 ----
+ window.__applyData=function(payload){
+  D=payload;renderFallback(D);if(ECHARTS_READY)buildECharts(D);
+  var st=document.getElementById('liveStamp');
+  if(st)st.textContent='数据快照 · '+(payload._updated||'')+' ｜ 已刷新（图表与词云已按最新数据重绘）';
+ };
+ // ---- 刷新（手动按钮 + 定时自动）：从同目录 data.json 拉取最新数据层并重绘 ----
+ (function(){
+  var btn=document.getElementById('liveRefresh');if(!btn)return;
+  var st=document.getElementById('liveStamp');
+  var autoOn=document.getElementById('autoOn'),autoSel=document.getElementById('autoInterval'),autoState=document.getElementById('autoState');
+  var fetching=false,timer=null,countTimer=null,nextAt=0;
+  var isFile=(location.protocol==='file:');
+  var OLD=btn.textContent;
+  function fmt(t){try{return new Date(t).toLocaleTimeString('zh-CN',{hour12:false})}catch(e){return ''}}
+  function okMsg(j,tag){var p=j.charts||j; if(j._updated==null)p=JSON.parse(JSON.stringify(p));
+   p._updated=j.updated||j.date||''; if(j.supply&&p){p.supply=p.supply||{};}
+   window.__applyData(p); if(st)st.textContent='数据快照 · '+(p._updated||'')+' ｜ '+(tag||'已刷新')+'（图表与词云已按最新数据重绘）';}
+  function doRefresh(tag){
+   if(fetching)return Promise.resolve();
+   fetching=true; if(btn){btn.disabled=true;btn.textContent='⏳ 拉取中…';}
+   return fetch('data.json?t='+Date.now(),{cache:'no-store'})
+    .then(function(r){if(!r.ok)throw new Error('http '+r.status);return r.json();})
+    .then(function(j){okMsg(j,tag);
+      if(btn){btn.disabled=false;btn.textContent=(tag&&tag.indexOf('自动')>=0)?'↻ 已自动刷新':OLD;
+        if(tag&&tag.indexOf('自动')>=0)setTimeout(function(){btn.textContent=OLD;},2000);}
+      nextAt=Date.now()+(parseInt(autoSel.value,10)||300)*1000;})
+    .catch(function(e){if(st)st.textContent='拉取失败：确认 data.json 与 index.html 同目录（'+e.message+'）';
+      if(btn){btn.disabled=false;btn.textContent=OLD;}})
+    .then(function(){fetching=false;});
+  }
+  // 倒计时显示
+  function tickCount(){if(!autoOn||!autoOn.checked||isFile){return;}
+   var s=Math.max(0,Math.ceil((nextAt-Date.now())/1000));
+   if(autoState)autoState.textContent='下次自动刷新 '+Math.floor(s/60)+'分'+(s%60)+'秒';}
+  function startAuto(){stopAuto();
+   var sec=parseInt(autoSel.value,10)||300; nextAt=Date.now()+sec*1000;
+   doRefresh('定时自动刷新');
+   timer=setInterval(function(){doRefresh('定时自动刷新');},sec*1000);
+   countTimer=setInterval(tickCount,1000); tickCount();
+   if(autoState)autoState.classList.remove('off');}
+  function stopAuto(){if(timer){clearInterval(timer);timer=null;}if(countTimer){clearInterval(countTimer);countTimer=null;}
+   if(autoState){autoState.textContent='定时刷新已关闭';autoState.classList.add('off');}}
+  btn.addEventListener('click',function(){doRefresh('手动刷新');});
+  if(isFile){ if(autoOn){autoOn.disabled=true;autoOn.checked=false;}
+   if(autoState)autoState.textContent='本地 file:// 不能联网读取，发布到 GitHub Pages 后定时刷新可用';
+  }else{
+   if(autoState){autoState.textContent='定时刷新已关闭';autoState.classList.add('off');}
+   if(autoOn)autoOn.addEventListener('change',function(){autoOn.checked?startAuto():stopAuto();});
+   if(autoSel)autoSel.addEventListener('change',function(){if(autoOn&&autoOn.checked)startAuto();});
+  }
+ })();
  // Tailwind / Alpine 同样非阻塞；不可达时内联保底样式与原生JS已覆盖功能
  tryLoad(['https://cdn.tailwindcss.com'],null,function(){});
  tryLoad(['https://unpkg.com/@alpinejs/[email protected]/dist/cdn.min.js',
           'https://cdn.jsdelivr.net/npm/@alpinejs/[email protected]/dist/cdn.min.js',
           'https://registry.npmmirror.com/@alpinejs/cdn/3.14.1/files/dist/cdn.min.js'],function(){return !!window.Alpine},function(){});
-})();</script>
+ })();</script>
 </body>
 </html>
