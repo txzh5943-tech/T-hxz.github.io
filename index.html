@@ -94,6 +94,26 @@ footer{padding:18px 0 30px;color:#6E6E6E;font-size:12px;border-top:1px solid var
 .livebar .stamp#autoState{color:var(--navy);font-weight:600}
 .livebar .stamp#autoState.off{color:#888;font-weight:400}
 @media print{nav.tabs,.fbar,.livebar{display:none}html.js section.panel{display:block}}
+/* ===== 交互分析层（纯前端，零依赖） ===== */
+.ia-wgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 18px;margin:8px 0 12px}
+.ia-wgrid .w{display:flex;flex-direction:column;gap:3px}
+.ia-wgrid .w label{font-size:12.5px;color:#444;display:flex;justify-content:space-between}
+.ia-wgrid .w label b{color:var(--navy);font-variant-numeric:tabular-nums}
+.ia-wgrid .w input[type=range]{width:100%;accent-color:var(--navy)}
+.ia-wgrid .w .cap{font-size:11px;color:#777}
+.ia-filters{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 12px;font-size:12.5px}
+.ia-filters .chip{cursor:pointer;user-select:none}
+.ia-filters .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.ia-ck{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+#iaReset{cursor:pointer}
+.ia-bars{display:flex;flex-direction:column;gap:5px}
+.ia-bars .r{display:flex;align-items:center;gap:8px}
+.ia-bars .r .nm{flex:0 0 220px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ia-bars .r .bt{flex:1;height:18px;background:#EEF1F5;border-radius:5px;overflow:hidden;position:relative}
+.ia-bars .r .bt>i{display:block;height:100%;border-radius:5px;box-shadow:inset 0 0 0 1px rgba(74,70,148,.75);transition:width .18s}
+.ia-bars .r .sv{flex:0 0 56px;text-align:right;font-weight:700;font-size:12px;color:#333;font-variant-numeric:tabular-nums}
+.ia-bars .r .rk{flex:0 0 26px;text-align:center;font-size:12px;color:#666}
+html.js #panel-interact .ia-empty{display:block}
 </style>
 </head>
 <body>
@@ -114,9 +134,10 @@ footer{padding:18px 0 30px;color:#6E6E6E;font-size:12px;border-top:1px solid var
  <button data-tab="elems">要素分析</button>
  <button data-tab="supply">阿里巴巴选品</button>
  <button data-tab="pains">痛点聚类</button>
- <button data-tab="culture">文化适配矩阵</button>
- <button data-tab="plans">差异化方案</button>
- <button data-tab="flow">工作流监控</button>
+  <button data-tab="culture">文化适配矩阵</button>
+  <button data-tab="plans">差异化方案</button>
+  <button data-tab="interact">交互分析</button>
+  <button data-tab="flow">工作流监控</button>
 </nav>
 <div class="livebar">
  <button id="liveRefresh">↻ 立即刷新</button>
@@ -265,6 +286,46 @@ footer{padding:18px 0 30px;color:#6E6E6E;font-size:12px;border-top:1px solid var
   </div>
  </div>
 </section>
+<section class="panel" id="panel-interact">
+  <div class="card">
+    <h2 class="pt">方案评分台 · 可调权重实时重排（环节4 · 纯前端重算，离线可用）</h2>
+    <p class="muted">拖动滑块改变各环节权重，候选池排名、评分条与分数<b>实时重算重绘</b>。默认值 = 后端原始公式，可精确复现 v1_A 排序分。<br>
+      A类分 = support × lift × <b>w1</b> ＋ 品类记录数 × <b>w2</b>　｜　B类分 = 全局频次 × <b>w3</b> ＋ 品类记录数 × <b>w4</b> ＋ 有痛点加成 × <b>w5</b>。</p>
+    <div class="ia-wgrid" id="iaWeights"></div>
+    <div class="ia-filters">
+      <span class="muted">品类：</span><span id="iaCatChips"></span>
+      <span class="muted" style="margin-left:12px">类型：</span>
+      <label class="ia-ck"><input type="checkbox" class="iaType" value="A" checked> A 已验证组合</label>
+      <label class="ia-ck"><input type="checkbox" class="iaType" value="B" checked> B 跨品类移植</label>
+      <button class="chip" id="iaReset">↺ 恢复默认权重</button>
+      <span class="muted" id="iaCount"></span>
+    </div>
+    <div id="iaBars" class="ia-bars"></div>
+    <div style="overflow-x:auto;margin-top:10px">
+      <table class="tb" id="iaPoolTable">
+        <thead><tr><th>实时排名</th><th>方案</th><th>类型</th><th>要素组合</th><th>品类</th><th>目标价带</th><th>解决痛点</th><th>实时分</th><th>原分</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="muted">实时分随权重变化；「原分」为后端 v1_A 冻结值，用于对照。拖动使某权重趋 0 即等于「关掉该维度」，可观察排序敏感性、验证结论稳健性。</p>
+  </div>
+  <div class="card">
+    <h2 class="pt">适配热力探索 · 要素检索 + 按品类排序 + 阈值染色（环节3）</h2>
+    <div class="fbar">
+      <input id="iaMxKw" type="search" placeholder="搜索要素（如 步摇 / 礼品 / 流苏）">
+      <label class="muted">按品类排序：
+        <select id="iaMxSort"></select>
+      </label>
+      <label class="muted">强适配阈值指数 ≥
+        <input id="iaMxTh" type="range" min="100" max="200" value="120" style="width:120px;vertical-align:middle">
+        <b id="iaMxThV">1.20</b>
+      </label>
+      <span class="muted" id="iaMxCt"></span>
+    </div>
+    <div style="overflow-x:auto"><table class="tb" id="iaMatrix"></table></div>
+    <p class="muted">底色按指数实时染色：<span class="chip g">绿≥阈值（强适配·跨品类移植机会）</span> <span class="chip">白（常态）</span> <span class="chip a">黄（偏弱）</span> <span class="chip r">红（结构性洼地）</span>。形制词已剔除，指数=品类内渗透÷全局渗透。</p>
+  </div>
+</section>
 <section class="panel" id="panel-flow">
  <div class="card">
   <h2 class="pt">四子环节链路状态（榜单采集 → 要素抽取 → 横向对比 → 差异化提案）</h2>
@@ -300,8 +361,8 @@ footer{padding:18px 0 30px;color:#6E6E6E;font-size:12px;border-top:1px solid var
  </div>
 </section>
 </div>
-<footer><div class="wrap">千问办公应用大赛·市场营销赛道 · 成员A 工具链与数据流 | 构建：build_dashboard.py 于 2026-10-30 14:49 | 渐进增强：内联保底样式 + 纯CSS兜底图表（零依赖，离线必然可见）；Tailwind/ECharts/Alpine 经多CDN源（境内优先）非阻塞加载，成功后自动升级为交互图表，任一不可达不留空白 | 数据未核验条目均标「AI采集·待核验」，来源链接可点击复核</div></footer>
-<script id="page-data" type="application/json">{"elems":[["汉服配饰",37,52.9],["古风",35,50.0],["流苏",30,42.9],["发簪",25,35.7],["新中式",25,35.7],["步摇",21,30.0],["礼品属性",21,30.0],["原创设计",19,27.1],["国风",19,27.1],["旗袍配饰",18,25.7],["发钗",16,22.9],["项链",15,21.4],["复古",14,20.0],["花朵",13,18.6],["高级感",11,15.7],["套装",11,15.7],["百搭",10,14.3],["小众",10,14.3],["耳环",10,14.3],["古典",9,12.9],["简约",9,12.9],["珍珠",9,12.9],["耳钉",9,12.9],["品牌款",8,11.4],["手工",8,11.4]],"bands":[{"name":"低价带(\u003c20元)","value":33},{"name":"中价带(20-100元)","value":14},{"name":"高价带(>100元)","value":3}],"mats":[{"name":"合金","value":19},{"name":"珍珠","value":19},{"name":"S925银","value":9},{"name":"银质","value":8},{"name":"和田玉","value":7},{"name":"黄金","value":7},{"name":"黑檀木","value":6},{"name":"苗银","value":5},{"name":"玉质","value":5},{"name":"纯银","value":5},{"name":"铜质","value":4},{"name":"足银","value":4}],"pains":[{"kw":"做工瑕疵","zh":"做工/质感不达预期","sev":"high","prods":3,"rc":41,"evidence":"嗯，看起来还可以，买来给孩子留着过年配汉服的，买了好几个，孩子都很喜欢，质感一般，还可以吧"},{"kw":"做工瑕疵","zh":"做工/质感不达预期","sev":"high","prods":3,"rc":43,"evidence":"做工一般,背后有划伤。着急出门留下了"},{"kw":"尺寸不符预期","zh":"尺寸与预期不符","sev":"high","prods":3,"rc":1000,"evidence":"光泽度:挺好,淡水珍珠 珍珠大小:适中 圆润度:挺圆的,还可以 项链长度:比想象中要短一些"},{"kw":"尺寸不符预期","zh":"尺寸与预期不符","sev":"high","prods":3,"rc":200,"evidence":"包装完好,相信周大福品牌,色泽比较偏亮,56号有点偏紧了😄"},{"kw":"做工瑕疵","zh":"做工/质感不达预期","sev":"high","prods":3,"rc":200,"evidence":"还不错,很好看,如果能无瑕疵就更好了 颜色光泽:无色差 佩戴效果:好看"},{"kw":"尺寸不符预期","zh":"尺寸与预期不符","sev":"high","prods":3,"rc":200,"evidence":"包装的非常精美,稍微有点包装过度了,因为是礼盒装,没想到他礼盒这么大,然后本体其实很小不占地方,总体来讲还是非常精美的,老婆也非常满意"},{"kw":"价格高于预期","zh":"价格偏高","sev":"high","prods":2,"rc":20000,"evidence":"还不错,银价比之前贵了好多, 可调节尺寸:可以"},{"kw":"价格高于预期","zh":"价格偏高","sev":"high","prods":2,"rc":20000,"evidence":"包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,表面是镀银的,还是有点小贵,毕竟只是镀银,但是纯银的又比较软"},{"kw":"镀银名不副实","zh":"材质标注与价格不符","sev":"high","prods":1,"rc":20000,"evidence":"包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,表面是镀银的,还是有点小贵,毕竟只是镀银,但是纯银的又比较软"},{"kw":"材质偏软","zh":"足银偏软易变形","sev":"high","prods":1,"rc":20000,"evidence":"包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,表面是镀银的,还是有点小贵,毕竟只是镀银,但是纯银的又比较软"},{"kw":"圆润度不足","zh":"珠体不够圆","sev":"medium","prods":1,"rc":1000,"evidence":"珍珠项链妈妈很满意,有礼盒带证书,珠子大小还可以不是很圆戴上效果还可以,耳钉很好看,冲这个价钱非常性价比了"},{"kw":"易断","zh":"绳线易断","sev":"low","prods":1,"rc":100,"evidence":"线很容易就断了,掉了一地都是～～～"},{"kw":"过敏担忧","zh":"材质过敏不确定","sev":"low","prods":1,"rc":100,"evidence":"套盒很实惠,珠子匀称,有亮度。送人自己带都很合适。包装完整,物流很快上午拍的,下午就送到啦。一次拍了两套,其中一套没有送手提袋,耳饰上有925银的钢印,没有带,不知道过不过敏"},{"kw":"配件缺失","zh":"随附配件缺失","sev":"low","prods":1,"rc":100,"evidence":"套盒很实惠,珠子匀称,有亮度。送人自己带都很合适。包装完整,物流很快上午拍的,下午就送到啦。一次拍了两套,其中一套没有送手提袋,耳饰上有925银的钢印,没有带,不知道过不过敏"},{"kw":"佩戴门槛高","zh":"需先盘发才能佩戴","sev":"low","prods":1,"rc":500,"evidence":"风钗好看漂亮,就是须先挽好头发再插上凤钗"},{"kw":"稳固性不足","zh":"插不发/易滑落","sev":"low","prods":1,"rc":200,"evidence":"发簪零散在头发上插不住，原因是因为头发太多了，要滑起走，无奈只能插一根木头的簪子一起在头上"},{"kw":"包装过度","zh":"包装超出实物体量","sev":"low","prods":1,"rc":200,"evidence":"包装的非常精美,稍微有点包装过度了,因为是礼盒装,没想到他礼盒这么大,然后本体其实很小不占地方,总体来讲还是非常精美的,老婆也非常满意"}],"negs":[["做工瑕疵",3],["尺寸不符预期",3],["价格高于预期",2],["佩戴门槛高",1],["材质偏软",1],["镀银名不副实",1],["包装过度",1],["稳固性不足",1],["易断",1],["圆润度不足",1]],"pos":[["做工精细",10],["性价比高",8],["光泽质感好",7],["包装精致",6],["大气高级",6],["送礼场景",5],["佩戴舒适",5],["物流快",5],["质感好",4],["佩戴稳固",3],["不缠发不勾丝",3],["与图片一致",3],["客服服务好",2],["复购意愿",2],["上镜出片",1],["佩戴不过敏",1]],"supply":{"mats":[["S925银",33],["檀木",22],["珐琅",19],["珍珠",18],["醋酸",12],["合金",10],["花丝",10],["水晶",7],["烧蓝",6],["木质",6],["玉髓",5],["和田玉",5],["琉璃",4],["玛瑙",3],["翡翠",3],["电镀",3]],"bands":{"hair_accessory":{"label":"发饰（发簪/步摇/头饰）","wholesale_low":0.5,"wholesale_high":6.0,"main_material":"合金 / 木质 / 醋酸（主流）","premium_note":"S925银 / 花丝 / 珐琅工艺款约 8.4–755，属高端带"},"necklace":{"label":"颈饰（项链/吊坠/锁骨链/毛衣链/璎珞）","wholesale_low":5.0,"wholesale_high":52.0,"main_material":"玉髓 / 玛瑙 / 珍珠 / 琉璃","premium_note":"岫玉璎珞长项链约 118，属高端带"},"earring":{"label":"耳饰（耳环/耳钉/耳坠）","wholesale_low":2.0,"wholesale_high":33.0,"main_material":"哑金 / 琉璃 / 仿玉石 / 合金","premium_note":"琉璃做旧款约到 33"},"hand_jewelry":{"label":"手饰（手链/手串/手镯）","wholesale_low":0.6,"wholesale_high":26.0,"main_material":"琉璃 / 珍珠 / 木质 / 编绳","premium_note":"沉香/南红/蜜蜡大漆款约到 26.4"},"pendant_brooch":{"label":"佩饰（背云/压襟/胸坠）","wholesale_low":3.0,"wholesale_high":30.0,"main_material":"合金 / 玉髓 / 滴油","premium_note":"汉服背云/压襟多用滴油+仿玉"},"gift_set":{"label":"礼盒套装","wholesale_low":6.0,"wholesale_high":60.0,"main_material":"合金+织锦盒 / 925银组合","premium_note":"套装起订量更高，供货价随件数浮动"}}},"scatter":[{"cat":"发饰","pts":[[24.85,20400,"【原型·合并2款】2025新款黑檀木U型发簪古典"],[4.99,15500,"【原型·合并19款】伊黛儿黑檀木发簪女U型双钗木"],[8.4,7100,"【原型·合并5款】汉服头饰超仙流苏山茶花发簪全套"],[17.4,6780,"【原型·合并11款】蜀梦阁古风珍珠流苏发簪步摇百"],[11.4,2000,"【原型·合并3款】新中式汉服流苏发簪红色新年发钗"],[5.71,1300,"【原型·合并2款】超级银色汉服头饰古装配饰儿童发"],[9.9,1300,"【原型·合并3款】古风长流苏发簪汉服步摇头饰新中"],[8.59,1000,"【原型·合并1款】战国袍头饰古风汉服曲裾发饰全套"],[17.78,963,"【原型·合并2款】清冷感新简约绿色盘发发簪中式步"],[11.9,800,"【原型·合并1款】松枝合金发夹流苏仙气汉服掩鬓步"],[4.75,800,"【原型·合并2款】新款花卉流苏步摇发簪 复古优雅"],[5.9,400,"【原型·合并1款】凤凰小珍珠苗族苗银发饰头钗配饰"],[6.9,400,"【原型·合并1款】古风祥云发簪明制宋制汉服仿玉发"],[7.09,400,"【原型·合并1款】战国袍头饰古风汉服苗银发饰秦汉"],[19.8,300,"【原型·合并4款】新娘头饰中式古典红色绒花流苏步"],[13.5,200,"【原型·合并1款】儿童新年汉服马面裙古风发簪"],[25.3,200,"【原型·合并1款】扇影摇光-复古扇形珍珠水钻发簪"],[8.9,200,"【原型·合并1款】黑檀木发簪古风发饰盘发木簪流苏"],[11.8,100,"【原型·合并1款】复古玛瑙玉髓菩提苗银古典长发簪"],[14.0,65,"【原型·合并1款】百搭红楼梦林黛玉仿同款明宋古装"],[39.5,47,"【原型·合并2款】「流光」古典珍珠长流苏发簪优雅"],[59.99,8,"【原型·合并1款】银杏叶s925镀银发簪子女古典"]]},{"cat":"颈饰","pts":[[18.81,15346,"【原型·合并15款】芯奢汉服璎珞背云长流苏长命锁"],[84.84,6000,"【原型·合并1款】「玉髓福禄」冰透白玉髓葫芦项链"],[37.44,3000,"【原型·合并2款】云深雾浅 猫咪纳财 原创猫爪铜"],[10.94,2052,"【原型·合并2款】古风汉服长项链渐变流苏明制唐风"],[15.0,2000,"【原型·合并1款】【宋锦蝴蝶】新中式旗袍配饰国风"],[17.0,1805,"【原型·合并3款】中国风108颗朱砂串珠斜挎链长"],[21.9,1669,"【原型·合并3款】格格间【黄铃兰】项链珍珠花朵软"],[21.4,1500,"【原型·合并2款】格格间原创【长春】晚明风平安锁"],[7.84,300,"【原型·合并1款】汉服软璎珞古风珍珠铃兰花项链女"],[16.0,200,"【原型·合并2款】国潮正红背云长璎珞古风汉服项链"],[168.0,3,"【原型·合并1款】墨涧花贝壳花瓣项链女海蓝宝白水"]]},{"cat":"耳饰","pts":[[20.63,30017,"【原型·合并2款】月下竹影︳竹元素月亮耳环夸张大"],[8.63,8000,"【原型·合并1款】黑色双层耳骨夹~小众设计耳夹"],[23.15,3200,"【原型·合并7款】国风耳环女新中式新娘秀禾复古秋"],[24.5,1400,"【原型·合并2款】珍珠款轻奢气质流苏耳环"],[18.82,1000,"【原型·合并1款】金色镂空树叶蚊香盘耳夹"],[14.8,957,"【原型·合并5款】云南复古布艺耳环中国扎染蓝染耳"],[16.8,900,"【原型·合并1款】925纯银星星月亮耳钉耳环女耳"],[13.18,800,"【原型·合并1款】新中式红色水滴耳环女士国风"],[192.0,52,"【原型·合并1款】民族风年轮苗银莲花雕花耳环女"]]},{"cat":"佩饰","pts":[[0.9,5000,"【原型·合并1款】珍珠白扇流苏穗子 高端精致国潮"],[14.76,1800,"【原型·合并10款】QBILY马面裙压襟禁步 新"],[30.59,1100,"【原型·合并2款】黎落阁原创五毒荷包汉服双面刺绣"],[1.11,1000,"【原型·合并1款】国风风铃梅兰竹菊荷挂件礼品精美"]]},{"cat":"手饰","pts":[[2.83,6000,"【原型·合并2款】手持2024年蝴蝶串珠手链女生"],[25.3,2000,"【原型·合并1款】清冷感银色小白花双戒指新中式"],[373.0,1000,"【原型·合并1款】朱炳仁铜四方来财手镯精致首饰中"]]}]}</script>
+<footer><div class="wrap">千问办公应用大赛·市场营销赛道 · 成员A 工具链与数据流 | 构建：build_dashboard.py 于 2026-10-30 16:03 | 渐进增强：内联保底样式 + 纯CSS兜底图表（零依赖，离线必然可见）；Tailwind/ECharts/Alpine 经多CDN源（境内优先）非阻塞加载，成功后自动升级为交互图表，任一不可达不留空白 | 数据未核验条目均标「AI采集·待核验」，来源链接可点击复核</div></footer>
+<script id="page-data" type="application/json">{"elems":[["汉服配饰",37,52.9],["古风",35,50.0],["流苏",30,42.9],["发簪",25,35.7],["新中式",25,35.7],["步摇",21,30.0],["礼品属性",21,30.0],["原创设计",19,27.1],["国风",19,27.1],["旗袍配饰",18,25.7],["发钗",16,22.9],["项链",15,21.4],["复古",14,20.0],["花朵",13,18.6],["高级感",11,15.7],["套装",11,15.7],["百搭",10,14.3],["小众",10,14.3],["耳环",10,14.3],["古典",9,12.9],["简约",9,12.9],["珍珠",9,12.9],["耳钉",9,12.9],["品牌款",8,11.4],["手工",8,11.4]],"bands":[{"name":"低价带(\u003c20元)","value":33},{"name":"中价带(20-100元)","value":14},{"name":"高价带(>100元)","value":3}],"mats":[{"name":"合金","value":19},{"name":"珍珠","value":19},{"name":"S925银","value":9},{"name":"银质","value":8},{"name":"和田玉","value":7},{"name":"黄金","value":7},{"name":"黑檀木","value":6},{"name":"苗银","value":5},{"name":"玉质","value":5},{"name":"纯银","value":5},{"name":"铜质","value":4},{"name":"足银","value":4}],"pains":[{"kw":"做工瑕疵","zh":"做工/质感不达预期","sev":"high","prods":3,"rc":41,"evidence":"嗯，看起来还可以，买来给孩子留着过年配汉服的，买了好几个，孩子都很喜欢，质感一般，还可以吧"},{"kw":"做工瑕疵","zh":"做工/质感不达预期","sev":"high","prods":3,"rc":43,"evidence":"做工一般,背后有划伤。着急出门留下了"},{"kw":"尺寸不符预期","zh":"尺寸与预期不符","sev":"high","prods":3,"rc":1000,"evidence":"光泽度:挺好,淡水珍珠 珍珠大小:适中 圆润度:挺圆的,还可以 项链长度:比想象中要短一些"},{"kw":"尺寸不符预期","zh":"尺寸与预期不符","sev":"high","prods":3,"rc":200,"evidence":"包装完好,相信周大福品牌,色泽比较偏亮,56号有点偏紧了😄"},{"kw":"做工瑕疵","zh":"做工/质感不达预期","sev":"high","prods":3,"rc":200,"evidence":"还不错,很好看,如果能无瑕疵就更好了 颜色光泽:无色差 佩戴效果:好看"},{"kw":"尺寸不符预期","zh":"尺寸与预期不符","sev":"high","prods":3,"rc":200,"evidence":"包装的非常精美,稍微有点包装过度了,因为是礼盒装,没想到他礼盒这么大,然后本体其实很小不占地方,总体来讲还是非常精美的,老婆也非常满意"},{"kw":"价格高于预期","zh":"价格偏高","sev":"high","prods":2,"rc":20000,"evidence":"还不错,银价比之前贵了好多, 可调节尺寸:可以"},{"kw":"价格高于预期","zh":"价格偏高","sev":"high","prods":2,"rc":20000,"evidence":"包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,表面是镀银的,还是有点小贵,毕竟只是镀银,但是纯银的又比较软"},{"kw":"镀银名不副实","zh":"材质标注与价格不符","sev":"high","prods":1,"rc":20000,"evidence":"包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,表面是镀银的,还是有点小贵,毕竟只是镀银,但是纯银的又比较软"},{"kw":"材质偏软","zh":"足银偏软易变形","sev":"high","prods":1,"rc":20000,"evidence":"包装还可以,是图文相符的,买来可以配汉服,有两套马面裙,穿马面裙的时候就可以用,表面是镀银的,还是有点小贵,毕竟只是镀银,但是纯银的又比较软"},{"kw":"圆润度不足","zh":"珠体不够圆","sev":"medium","prods":1,"rc":1000,"evidence":"珍珠项链妈妈很满意,有礼盒带证书,珠子大小还可以不是很圆戴上效果还可以,耳钉很好看,冲这个价钱非常性价比了"},{"kw":"易断","zh":"绳线易断","sev":"low","prods":1,"rc":100,"evidence":"线很容易就断了,掉了一地都是～～～"},{"kw":"过敏担忧","zh":"材质过敏不确定","sev":"low","prods":1,"rc":100,"evidence":"套盒很实惠,珠子匀称,有亮度。送人自己带都很合适。包装完整,物流很快上午拍的,下午就送到啦。一次拍了两套,其中一套没有送手提袋,耳饰上有925银的钢印,没有带,不知道过不过敏"},{"kw":"配件缺失","zh":"随附配件缺失","sev":"low","prods":1,"rc":100,"evidence":"套盒很实惠,珠子匀称,有亮度。送人自己带都很合适。包装完整,物流很快上午拍的,下午就送到啦。一次拍了两套,其中一套没有送手提袋,耳饰上有925银的钢印,没有带,不知道过不过敏"},{"kw":"佩戴门槛高","zh":"需先盘发才能佩戴","sev":"low","prods":1,"rc":500,"evidence":"风钗好看漂亮,就是须先挽好头发再插上凤钗"},{"kw":"稳固性不足","zh":"插不发/易滑落","sev":"low","prods":1,"rc":200,"evidence":"发簪零散在头发上插不住，原因是因为头发太多了，要滑起走，无奈只能插一根木头的簪子一起在头上"},{"kw":"包装过度","zh":"包装超出实物体量","sev":"low","prods":1,"rc":200,"evidence":"包装的非常精美,稍微有点包装过度了,因为是礼盒装,没想到他礼盒这么大,然后本体其实很小不占地方,总体来讲还是非常精美的,老婆也非常满意"}],"negs":[["做工瑕疵",3],["尺寸不符预期",3],["价格高于预期",2],["佩戴门槛高",1],["材质偏软",1],["镀银名不副实",1],["包装过度",1],["稳固性不足",1],["易断",1],["圆润度不足",1]],"pos":[["做工精细",10],["性价比高",8],["光泽质感好",7],["包装精致",6],["大气高级",6],["送礼场景",5],["佩戴舒适",5],["物流快",5],["质感好",4],["佩戴稳固",3],["不缠发不勾丝",3],["与图片一致",3],["客服服务好",2],["复购意愿",2],["上镜出片",1],["佩戴不过敏",1]],"supply":{"mats":[["S925银",33],["檀木",22],["珐琅",19],["珍珠",18],["醋酸",12],["合金",10],["花丝",10],["水晶",7],["烧蓝",6],["木质",6],["玉髓",5],["和田玉",5],["琉璃",4],["玛瑙",3],["翡翠",3],["电镀",3]],"bands":{"hair_accessory":{"label":"发饰（发簪/步摇/头饰）","wholesale_low":0.5,"wholesale_high":6.0,"main_material":"合金 / 木质 / 醋酸（主流）","premium_note":"S925银 / 花丝 / 珐琅工艺款约 8.4–755，属高端带"},"necklace":{"label":"颈饰（项链/吊坠/锁骨链/毛衣链/璎珞）","wholesale_low":5.0,"wholesale_high":52.0,"main_material":"玉髓 / 玛瑙 / 珍珠 / 琉璃","premium_note":"岫玉璎珞长项链约 118，属高端带"},"earring":{"label":"耳饰（耳环/耳钉/耳坠）","wholesale_low":2.0,"wholesale_high":33.0,"main_material":"哑金 / 琉璃 / 仿玉石 / 合金","premium_note":"琉璃做旧款约到 33"},"hand_jewelry":{"label":"手饰（手链/手串/手镯）","wholesale_low":0.6,"wholesale_high":26.0,"main_material":"琉璃 / 珍珠 / 木质 / 编绳","premium_note":"沉香/南红/蜜蜡大漆款约到 26.4"},"pendant_brooch":{"label":"佩饰（背云/压襟/胸坠）","wholesale_low":3.0,"wholesale_high":30.0,"main_material":"合金 / 玉髓 / 滴油","premium_note":"汉服背云/压襟多用滴油+仿玉"},"gift_set":{"label":"礼盒套装","wholesale_low":6.0,"wholesale_high":60.0,"main_material":"合金+织锦盒 / 925银组合","premium_note":"套装起订量更高，供货价随件数浮动"}}},"scatter":[{"cat":"发饰","pts":[[24.85,20400,"【原型·合并2款】2025新款黑檀木U型发簪古典"],[4.99,15500,"【原型·合并19款】伊黛儿黑檀木发簪女U型双钗木"],[8.4,7100,"【原型·合并5款】汉服头饰超仙流苏山茶花发簪全套"],[17.4,6780,"【原型·合并11款】蜀梦阁古风珍珠流苏发簪步摇百"],[11.4,2000,"【原型·合并3款】新中式汉服流苏发簪红色新年发钗"],[5.71,1300,"【原型·合并2款】超级银色汉服头饰古装配饰儿童发"],[9.9,1300,"【原型·合并3款】古风长流苏发簪汉服步摇头饰新中"],[8.59,1000,"【原型·合并1款】战国袍头饰古风汉服曲裾发饰全套"],[17.78,963,"【原型·合并2款】清冷感新简约绿色盘发发簪中式步"],[11.9,800,"【原型·合并1款】松枝合金发夹流苏仙气汉服掩鬓步"],[4.75,800,"【原型·合并2款】新款花卉流苏步摇发簪 复古优雅"],[5.9,400,"【原型·合并1款】凤凰小珍珠苗族苗银发饰头钗配饰"],[6.9,400,"【原型·合并1款】古风祥云发簪明制宋制汉服仿玉发"],[7.09,400,"【原型·合并1款】战国袍头饰古风汉服苗银发饰秦汉"],[19.8,300,"【原型·合并4款】新娘头饰中式古典红色绒花流苏步"],[13.5,200,"【原型·合并1款】儿童新年汉服马面裙古风发簪"],[25.3,200,"【原型·合并1款】扇影摇光-复古扇形珍珠水钻发簪"],[8.9,200,"【原型·合并1款】黑檀木发簪古风发饰盘发木簪流苏"],[11.8,100,"【原型·合并1款】复古玛瑙玉髓菩提苗银古典长发簪"],[14.0,65,"【原型·合并1款】百搭红楼梦林黛玉仿同款明宋古装"],[39.5,47,"【原型·合并2款】「流光」古典珍珠长流苏发簪优雅"],[59.99,8,"【原型·合并1款】银杏叶s925镀银发簪子女古典"]]},{"cat":"颈饰","pts":[[18.81,15346,"【原型·合并15款】芯奢汉服璎珞背云长流苏长命锁"],[84.84,6000,"【原型·合并1款】「玉髓福禄」冰透白玉髓葫芦项链"],[37.44,3000,"【原型·合并2款】云深雾浅 猫咪纳财 原创猫爪铜"],[10.94,2052,"【原型·合并2款】古风汉服长项链渐变流苏明制唐风"],[15.0,2000,"【原型·合并1款】【宋锦蝴蝶】新中式旗袍配饰国风"],[17.0,1805,"【原型·合并3款】中国风108颗朱砂串珠斜挎链长"],[21.9,1669,"【原型·合并3款】格格间【黄铃兰】项链珍珠花朵软"],[21.4,1500,"【原型·合并2款】格格间原创【长春】晚明风平安锁"],[7.84,300,"【原型·合并1款】汉服软璎珞古风珍珠铃兰花项链女"],[16.0,200,"【原型·合并2款】国潮正红背云长璎珞古风汉服项链"],[168.0,3,"【原型·合并1款】墨涧花贝壳花瓣项链女海蓝宝白水"]]},{"cat":"耳饰","pts":[[20.63,30017,"【原型·合并2款】月下竹影︳竹元素月亮耳环夸张大"],[8.63,8000,"【原型·合并1款】黑色双层耳骨夹~小众设计耳夹"],[23.15,3200,"【原型·合并7款】国风耳环女新中式新娘秀禾复古秋"],[24.5,1400,"【原型·合并2款】珍珠款轻奢气质流苏耳环"],[18.82,1000,"【原型·合并1款】金色镂空树叶蚊香盘耳夹"],[14.8,957,"【原型·合并5款】云南复古布艺耳环中国扎染蓝染耳"],[16.8,900,"【原型·合并1款】925纯银星星月亮耳钉耳环女耳"],[13.18,800,"【原型·合并1款】新中式红色水滴耳环女士国风"],[192.0,52,"【原型·合并1款】民族风年轮苗银莲花雕花耳环女"]]},{"cat":"佩饰","pts":[[0.9,5000,"【原型·合并1款】珍珠白扇流苏穗子 高端精致国潮"],[14.76,1800,"【原型·合并10款】QBILY马面裙压襟禁步 新"],[30.59,1100,"【原型·合并2款】黎落阁原创五毒荷包汉服双面刺绣"],[1.11,1000,"【原型·合并1款】国风风铃梅兰竹菊荷挂件礼品精美"]]},{"cat":"手饰","pts":[[2.83,6000,"【原型·合并2款】手持2024年蝴蝶串珠手链女生"],[25.3,2000,"【原型·合并1款】清冷感银色小白花双戒指新中式"],[373.0,1000,"【原型·合并1款】朱炳仁铜四方来财手镯精致首饰中"]]}],"pool":[{"rank":1,"name":"发饰 · 发簪×步摇","type":"A","cat":"hair_accessory","cat_zh":"发饰","elements":["发簪","步摇","古风"],"support":17,"lift":2.27,"gf":null,"rec":29,"hp":1,"score":34.8,"pain_zh":"价格偏高","band":"14.2–23.6"},{"rank":2,"name":"发饰 · 发簪×发钗","type":"A","cat":"hair_accessory","cat_zh":"发饰","elements":["发簪","发钗","步摇"],"support":14,"lift":2.45,"gf":null,"rec":29,"hp":1,"score":32.2,"pain_zh":"价格偏高","band":"14.2–23.6"},{"rank":3,"name":"发饰 · 国风×新中式","type":"A","cat":"hair_accessory","cat_zh":"发饰","elements":["国风","新中式","发簪"],"support":14,"lift":2.06,"gf":null,"rec":29,"hp":1,"score":28.9,"pain_zh":"价格偏高","band":"14.2–23.6"},{"rank":4,"name":"发饰 · 步摇×汉服配饰","type":"A","cat":"hair_accessory","cat_zh":"发饰","elements":["步摇","汉服配饰","发簪"],"support":17,"lift":1.53,"gf":null,"rec":29,"hp":1,"score":27.2,"pain_zh":"价格偏高","band":"14.2–23.6"},{"rank":5,"name":"发饰 · 旗袍配饰×汉服配饰","type":"A","cat":"hair_accessory","cat_zh":"发饰","elements":["旗袍配饰","汉服配饰","发簪"],"support":15,"lift":1.58,"gf":null,"rec":29,"hp":1,"score":25.8,"pain_zh":"价格偏高","band":"14.2–23.6"},{"rank":6,"name":"发饰 · 步摇×流苏","type":"A","cat":"hair_accessory","cat_zh":"发饰","elements":["步摇","流苏","发簪"],"support":14,"lift":1.56,"gf":null,"rec":29,"hp":1,"score":24.7,"pain_zh":"价格偏高","band":"14.2–23.6"},{"rank":7,"name":"颈饰 × 移植「礼品属性」","type":"B","cat":"necklace","cat_zh":"颈饰","elements":["礼品属性","项链"],"support":21,"lift":null,"gf":21,"rec":12,"hp":1,"score":16.4,"pain_zh":"绳线易断","band":"22.6–37.6"}],"weights_default":{"sA":0.6,"nA":0.4,"fB":0.35,"nB":0.5,"pB":3},"matrix":[{"element":"汉服配饰","freq":37,"gpen":52.9,"cells":[{"cat":"发饰","pen":72.41379310344827,"idx":1.37},{"cat":"耳饰","pen":27.27272727272727,"idx":0.52},{"cat":"颈饰","pen":75.0,"idx":1.42},{"cat":"手饰","pen":0.0,"idx":0.0},{"cat":"佩饰","pen":80.0,"idx":1.51},{"cat":"礼盒套装","pen":0.0,"idx":0.0}]},{"element":"古风","freq":35,"gpen":50.0,"cells":[{"cat":"发饰","pen":72.41379310344827,"idx":1.45},{"cat":"耳饰","pen":18.181818181818183,"idx":0.36},{"cat":"颈饰","pen":66.66666666666666,"idx":1.33},{"cat":"手饰","pen":33.33333333333333,"idx":0.67},{"cat":"佩饰","pen":40.0,"idx":0.8},{"cat":"礼盒套装","pen":0.0,"idx":0.0}]},{"element":"流苏","freq":30,"gpen":42.9,"cells":[{"cat":"发饰","pen":58.620689655172406,"idx":1.37},{"cat":"耳饰","pen":18.181818181818183,"idx":0.42},{"cat":"颈饰","pen":50.0,"idx":1.17},{"cat":"手饰","pen":0.0,"idx":0.0},{"cat":"佩饰","pen":80.0,"idx":1.87},{"cat":"礼盒套装","pen":14.285714285714285,"idx":0.33}]},{"element":"新中式","freq":25,"gpen":35.7,"cells":[{"cat":"发饰","pen":34.48275862068966,"idx":0.97},{"cat":"耳饰","pen":36.36363636363637,"idx":1.02},{"cat":"颈饰","pen":41.66666666666667,"idx":1.17},{"cat":"手饰","pen":83.33333333333334,"idx":2.33},{"cat":"佩饰","pen":20.0,"idx":0.56},{"cat":"礼盒套装","pen":0.0,"idx":0.0}]},{"element":"礼品属性","freq":21,"gpen":30.0,"cells":[{"cat":"发饰","pen":31.03448275862069,"idx":1.03},{"cat":"耳饰","pen":18.181818181818183,"idx":0.61},{"cat":"颈饰","pen":0.0,"idx":0.0},{"cat":"手饰","pen":50.0,"idx":1.67},{"cat":"佩饰","pen":20.0,"idx":0.67},{"cat":"礼盒套装","pen":85.71428571428571,"idx":2.86}]},{"element":"原创设计","freq":19,"gpen":27.1,"cells":[{"cat":"发饰","pen":24.137931034482758,"idx":0.89},{"cat":"耳饰","pen":27.27272727272727,"idx":1.0},{"cat":"颈饰","pen":25.0,"idx":0.92},{"cat":"手饰","pen":50.0,"idx":1.84},{"cat":"佩饰","pen":60.0,"idx":2.21},{"cat":"礼盒套装","pen":0.0,"idx":0.0}]},{"element":"国风","freq":18,"gpen":25.7,"cells":[{"cat":"发饰","pen":20.689655172413794,"idx":0.8},{"cat":"耳饰","pen":36.36363636363637,"idx":1.41},{"cat":"颈饰","pen":33.33333333333333,"idx":1.3},{"cat":"手饰","pen":33.33333333333333,"idx":1.3},{"cat":"佩饰","pen":40.0,"idx":1.56},{"cat":"礼盒套装","pen":0.0,"idx":0.0}]},{"element":"旗袍配饰","freq":18,"gpen":25.7,"cells":[{"cat":"发饰","pen":31.03448275862069,"idx":1.21},{"cat":"耳饰","pen":27.27272727272727,"idx":1.06},{"cat":"颈饰","pen":33.33333333333333,"idx":1.3},{"cat":"手饰","pen":0.0,"idx":0.0},{"cat":"佩饰","pen":40.0,"idx":1.56},{"cat":"礼盒套装","pen":0.0,"idx":0.0}]},{"element":"复古","freq":14,"gpen":20.0,"cells":[{"cat":"发饰","pen":20.689655172413794,"idx":1.03},{"cat":"耳饰","pen":27.27272727272727,"idx":1.36},{"cat":"颈饰","pen":33.33333333333333,"idx":1.67},{"cat":"手饰","pen":0.0,"idx":0.0},{"cat":"佩饰","pen":0.0,"idx":0.0},{"cat":"礼盒套装","pen":14.285714285714285,"idx":0.71}]},{"element":"花朵","freq":13,"gpen":18.6,"cells":[{"cat":"发饰","pen":17.24137931034483,"idx":0.93},{"cat":"耳饰","pen":18.181818181818183,"idx":0.98},{"cat":"颈饰","pen":16.666666666666664,"idx":0.9},{"cat":"手饰","pen":33.33333333333333,"idx":1.79},{"cat":"佩饰","pen":20.0,"idx":1.08},{"cat":"礼盒套装","pen":14.285714285714285,"idx":0.77}]},{"element":"高级感","freq":11,"gpen":15.7,"cells":[{"cat":"发饰","pen":20.689655172413794,"idx":1.32},{"cat":"耳饰","pen":9.090909090909092,"idx":0.58},{"cat":"颈饰","pen":8.333333333333332,"idx":0.53},{"cat":"手饰","pen":16.666666666666664,"idx":1.06},{"cat":"佩饰","pen":0.0,"idx":0.0},{"cat":"礼盒套装","pen":28.57142857142857,"idx":1.82}]},{"element":"套装","freq":11,"gpen":15.7,"cells":[{"cat":"发饰","pen":17.24137931034483,"idx":1.1},{"cat":"耳饰","pen":9.090909090909092,"idx":0.58},{"cat":"颈饰","pen":0.0,"idx":0.0},{"cat":"手饰","pen":0.0,"idx":0.0},{"cat":"佩饰","pen":0.0,"idx":0.0},{"cat":"礼盒套装","pen":71.42857142857143,"idx":4.55}]}],"matrix_cats":["发饰","耳饰","颈饰","手饰","佩饰","礼盒套装"]}</script>
 <script>document.documentElement.classList.add('js');
 var D=null;try{D=JSON.parse(document.getElementById('page-data').textContent)}catch(e){}
 // ---- 页签（原生，保证零依赖可切换） ----
@@ -514,5 +575,81 @@ var D=null;try{D=JSON.parse(document.getElementById('page-data').textContent)}ca
           'https://cdn.jsdelivr.net/npm/@alpinejs/[email protected]/dist/cdn.min.js',
           'https://registry.npmmirror.com/@alpinejs/cdn/3.14.1/files/dist/cdn.min.js'],function(){return !!window.Alpine},function(){});
  })();</script>
+<script>
+/* ===== 交互分析层：可调权重实时重排 + 适配热力探索（纯前端 DOM，零 CDN 依赖） ===== */
+(function(){
+  var D=window.D; if(!D||!D.pool||!D.pool.length)return;
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]})}
+  var WD=D.weights_default||{sA:.6,nA:.4,fB:.35,nB:.5,pB:3}, W={sA:WD.sA,nA:WD.nA,fB:WD.fB,nB:WD.nB,pB:WD.pB};
+  var COL={A:'#678EC9',B:'#FFCEE3'}, TN={A:'A',B:'B'};
+  var cats=[]; D.pool.forEach(function(p){if(cats.indexOf(p.cat)<0)cats.push(p.cat)});
+  var actCats={},actTypes={A:true,B:true}; cats.forEach(function(c){actCats[c]=true});
+  function liveScore(p){return p.type==='A'?(p.support*p.lift*W.sA+p.rec*W.nA):(p.gf*W.fB+p.rec*W.nB+p.hp*W.pB)}
+  // ---- 权重滑块 ----
+  var WDEF=[['sA','w1 · support×lift（A 共现强度）',0,1,.05],['nA','w2 · 品类记录数（A）',0,2,.05],
+            ['fB','w3 · 全局频次（B）',0,1,.05],['nB','w4 · 品类记录数（B）',0,2,.05],['pB','w5 · 痛点加成（B）',0,10,.5]];
+  var wBox=document.getElementById('iaWeights');
+  wBox.innerHTML=WDEF.map(function(d){return '<div class="w"><label><span>'+d[1]+'</span><b id="v_'+d[0]+'">'+W[d[0]].toFixed(2)+'</b></label>'+
+    '<input type="range" id="w_'+d[0]+'" min="'+d[2]+'" max="'+d[3]+'" step="'+d[4]+'" value="'+W[d[0]]+'"><span class="cap">默认 '+WD[d[0]]+'</span></div>'}).join('');
+  WDEF.forEach(function(d){var el=document.getElementById('w_'+d[0]);
+    el.addEventListener('input',function(){W[d[0]]=parseFloat(el.value);document.getElementById('v_'+d[0]).textContent=W[d[0]].toFixed(2);renderPool();});});
+  // ---- 品类/类型筛选 ----
+  var cc=document.getElementById('iaCatChips');
+  cc.innerHTML=cats.map(function(c){var z=(D.pool.filter(function(p){return p.cat===c})[0]||{}).cat_zh||c;
+    return '<span class="chip on" data-c="'+esc(c)+'">'+esc(z)+'</span>'}).join('');
+  cc.addEventListener('click',function(e){var s=e.target.closest('[data-c]');if(!s)return;
+    var c=s.dataset.c;actCats[c]=!actCats[c];s.classList.toggle('on',actCats[c]);renderPool();});
+  [].forEach.call(document.querySelectorAll('.iaType'),function(cb){cb.addEventListener('change',function(){actTypes[cb.value]=cb.checked;renderPool();});});
+  document.getElementById('iaReset').addEventListener('click',function(){W={sA:WD.sA,nA:WD.nA,fB:WD.fB,nB:WD.nB,pB:WD.pB};
+    WDEF.forEach(function(d){document.getElementById('w_'+d[0]).value=W[d[0]];document.getElementById('v_'+d[0]).textContent=W[d[0]].toFixed(2);});renderPool();});
+  function catsOn(){return cats.filter(function(c){return actCats[c]})}
+  function renderPool(){
+    var list=D.pool.filter(function(p){return actTypes[p.type]&&actCats[p.cat]})
+      .map(function(p){return {p:p,s:liveScore(p)}}).sort(function(a,b){return b.s-a.s});
+    var max=1;list.forEach(function(x){max=Math.max(max,x.s)});
+    document.getElementById('iaCount').textContent='实时重排 '+list.length+' / '+D.pool.length+' 条';
+    document.getElementById('iaBars').innerHTML=list.map(function(x,i){
+      return '<div class="r"><span class="rk">'+(i+1)+'</span><span class="nm" title="'+esc(x.p.name)+'">'+esc(x.p.name)+'</span>'+
+        '<span class="bt"><i style="width:'+Math.max(1.5,x.s/max*100).toFixed(1)+'%;background:'+COL[x.p.type]+'"></i></span>'+
+        '<span class="sv">'+x.s.toFixed(1)+'</span></div>'}).join('');
+    var tb=document.querySelector('#iaPoolTable tbody');
+    tb.innerHTML=list.map(function(x,i){var p=x.p;
+      return '<tr><td>'+(i+1)+'</td><td><b>'+esc(p.name)+'</b></td><td><span class="chip '+(p.type==='A'?'g':'a')+'">'+(p.type==='A'?'A 已验证':'B 移植')+'</span></td>'+
+        '<td>'+p.elements.map(function(e){return '<span class="el chip">'+esc(e)+'</span>'}).join('')+'</td>'+
+        '<td>'+esc(p.cat_zh)+'</td><td>'+(p.band?('¥'+esc(p.band)):'–')+'</td>'+
+        '<td class="muted" style="max-width:180px">'+esc(p.pain_zh)+'</td>'+
+        '<td style="font-weight:700;color:var(--navy)">'+x.s.toFixed(1)+'</td>'+
+        '<td class="muted">'+p.score.toFixed(1)+'</td></tr>'}).join('');
+  }
+  renderPool();
+  // ---- 适配热力探索 ----
+  var mx=D.matrix||[],mxc=D.matrix_cats||[];
+  if(mx.length){
+    var sortSel=document.getElementById('iaMxSort');
+    sortSel.innerHTML='<option value="freq">按全局频次（默认）</option>'+mxc.map(function(c){return '<option value="cat:'+esc(c)+'">按「'+esc(c)+'」适配指数↓</option>'}).join('');
+    var kwE=document.getElementById('iaMxKw'),thE=document.getElementById('iaMxTh'),thV=document.getElementById('iaMxThV'),ctE=document.getElementById('iaMxCt');
+    function cellColor(idx,TH){if(idx==null)return['#fff','–'];
+      if(idx>=TH)return['#E6F4EA',idx.toFixed(2)];if(idx<0.2)return['#FDECEC',idx.toFixed(2)];
+      if(idx<0.65)return['#FFF6E0',idx.toFixed(2)];return['#fff',idx.toFixed(2)]}
+    function renderMx(){
+      var q=(kwE.value||'').trim().toLowerCase(),TH=(parseInt(thE.value,10)||120)/100;
+      thV.textContent=TH.toFixed(2);
+      var sortV=sortSel.value,rows=mx.filter(function(r){return !q||r.element.toLowerCase().indexOf(q)>=0});
+      rows=rows.slice().sort(function(a,b){
+        if(sortV==='freq')return b.freq-a.freq;
+        var c=sortV.slice(4);function idx(r){var x=r.cells.filter(function(k){return k.cat===c})[0];return x&&x.idx!=null?x.idx:-1}
+        return idx(b)-idx(a);});
+      var head='<tr><th>要素</th><th>频次</th><th>全局渗透</th>'+mxc.map(function(c){return '<th>'+esc(c)+'</th>'}).join('')+'</tr>';
+      var body=rows.map(function(r){return '<tr><td><b>'+esc(r.element)+'</b></td><td>'+r.freq+'</td><td>'+r.gpen.toFixed(0)+'%</td>'+
+        r.cells.map(function(k){var cc2=cellColor(k.idx,TH);
+          return '<td class="heatcell" style="background:'+cc2[0]+'">'+(k.idx==null?'–':k.pen.toFixed(0)+'%·'+cc2[1])+'</td>'}).join('')+'</tr>'}).join('');
+      document.getElementById('iaMatrix').innerHTML=head+body;
+      ctE.textContent='命中 '+rows.length+' / '+mx.length+' 要素';
+    }
+    kwE.addEventListener('input',renderMx);sortSel.addEventListener('change',renderMx);thE.addEventListener('input',renderMx);
+    renderMx();
+  }
+})();
+</script>
 </body>
 </html>
